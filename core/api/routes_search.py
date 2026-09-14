@@ -36,5 +36,5 @@ def metrics():
         "drift_count": state.quarantine_store.count("quarantine"),
         "unmapped_field_ratio": state.normalized_store.unmapped_field_ratio(),
         "raw_preservation_pct": 100.0,
-        "chain_verified": state.raw_store.verify_chain(),
+        "chain_verified": state.raw_store.verify_chain_cached(),
     }

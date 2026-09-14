@@ -162,7 +162,7 @@ Both are host-environment issues, not application bugs — standard/Desktop Dock
 | `POST` | `/ingest` | Raw log bytes in → parsed, mapped, stored, or quarantined |
 | `GET` | `/search?q=&source=&limit=` | Substring search over normalized events |
 | `GET` | `/events/{raw_event_id}` | Raw log + normalized OCSF event, cross-referenced |
-| `GET` | `/verify-chain` | Replays the full hash chain — `true` unless tampered |
+| `GET` | `/verify-chain` | Replays the full hash chain and re-hashes every raw event from disk — `true` unless tampered |
 | `GET` | `/metrics` | Dashboard tile data |
 | `GET` | `/drift/quarantine` | List quarantined events |
 | `POST` | `/drift/quarantine/{id}/resolve` | `{"action": "quarantine" \| "auto-fix" \| "ignore"}` |
@@ -193,6 +193,7 @@ Every component also runs as a standalone self-check:
 ```bash
 cd core
 ../.venv/bin/python -m storage.hashchain
+../.venv/bin/python -m storage.raw_store
 ../.venv/bin/python -m parsers.registry
 ../.venv/bin/python -m ocsf.mapper
 ../.venv/bin/python -m drift.firewall
