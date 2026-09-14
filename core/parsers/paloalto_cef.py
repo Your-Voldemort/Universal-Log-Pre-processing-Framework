@@ -1,6 +1,6 @@
 import re
 
-from .base import BaseParser, ParsedEvent
+from .base import BaseParser, ParsedEvent, to_epoch_ms
 
 # CEF extension values may contain spaces (e.g. rt=Aug 30 2026 14:22:31),
 # so tokens can't be split on whitespace — split on "key=" boundaries instead.
@@ -60,6 +60,13 @@ class PaloAltoCEFParser(BaseParser):
             else:
                 unmapped[key] = value  # includes rt (timestamp) — never dropped
 
+        # rt stays verbatim in unmapped; its parsed form feeds OCSF time.
+        # CEF allows either epoch ms or "MMM dd yyyy HH:mm:ss".
+        rt = unmapped.get("rt", "")
+        event_time = int(rt) if rt.isdigit() else to_epoch_ms(rt)
+        if event_time is not None:
+            fields["event_time"] = event_time
+
         return ParsedEvent(
             source_format=self.source_format,
             raw_bytes=raw_bytes,
@@ -69,6 +76,8 @@ class PaloAltoCEFParser(BaseParser):
 
 
 def demo():
+    from datetime import datetime, timezone
+
     sample = (
         b"CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|"
         b"rt=Aug 30 2026 14:22:31 src=10.2.4.21 dst=172.20.1.8 spt=52341 "
@@ -85,6 +94,7 @@ def demo():
     assert event.fields["action"] == "allow"
     assert event.unmapped["deviceExternalId"] == "PA-VM-01"
     assert event.unmapped["rt"] == "Aug 30 2026 14:22:31"
+    assert event.fields["event_time"] == int(datetime(2026, 8, 30, 14, 22, 31, tzinfo=timezone.utc).timestamp() * 1000)
 
     # severity is not always 1 — a denied/blocked event commonly logs higher
     # (e.g. 3) — regression check for a real bug found generating demo data.

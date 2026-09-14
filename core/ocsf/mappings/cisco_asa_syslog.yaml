@@ -6,6 +6,7 @@ activity_name: "Connection Attempt"
 field_map:
   src_ip: src_endpoint.ip
   dst_ip: dst_endpoint.ip
+  src_port: src_endpoint.port
   dst_port: dst_endpoint.port
   action: disposition
   proto: connection_info.protocol_name

@@ -88,7 +88,7 @@ The response is a validated OCSF event with `unmapped`, `observables`, and `ulpf
 
 ### Demo data
 
-For a dashboard that isn't empty — 45 events across both vendor formats, a realistic denied port-scan burst (good material for the Compliance Report tab), and 3 unrecognized-format lines for the AI-assist demo:
+For a dashboard that isn't empty — 51 events across both vendor formats (including Cisco ASA teardowns and denies), a realistic denied port-scan burst (good material for the Compliance Report tab), and 3 unrecognized-format lines for the AI-assist demo:
 
 ```bash
 python3 testdata/seed_demo_data.py testdata/demo_logs.txt http://localhost:8000/ingest
@@ -225,6 +225,8 @@ An honest replay script, not a formal load-testing framework — it reports the 
 MVP scope, not oversights — see the Build Brief for what's deliberately deferred:
 
 - OCSF schema is a hand-vendored subset covering Network Activity (`class_uid` 4001) only, not the full `ocsf/ocsf-schema` repo. Sufficient for the 2 built-in parsers; extend `core/ocsf/schema/` for more classes.
+- The Cisco ASA parser covers connection build/teardown (302013–302016) and deny messages (106001, 106006, 106015, 106023, 106100), IPv4 only. Any other ASA message keeps its raw bytes and routes to `unknown_format` / AI-assist.
+- Device timestamps carry no timezone, so OCSF `time` assumes UTC — keep perimeter devices on UTC via NTP.
 - Search is `ILIKE` over a JSONB text cast, not a tsvector/GIN query — fine at hackathon data volumes.
 - Schema-drift signatures are in-memory per process (reset on restart) — fine for a live demo session.
 

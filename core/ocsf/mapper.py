@@ -13,10 +13,11 @@ MAPPINGS_DIR = Path(__file__).parent / "mappings"
 # Declarative action->disposition normalization, shared across all vendor
 # mappings so a new format needs only a new YAML file, never new code.
 ACTION_DISPOSITION_MAP = {
-    "built": "Allowed", "allow": "Allowed", "allowed": "Allowed",
-    "accept": "Allowed", "permit": "Allowed",
+    # a teardown closes a connection the device had already allowed
+    "built": "Allowed", "teardown": "Allowed", "allow": "Allowed", "allowed": "Allowed",
+    "accept": "Allowed", "permit": "Allowed", "permitted": "Allowed",
     "deny": "Denied", "denied": "Denied", "block": "Denied",
-    "blocked": "Denied", "drop": "Denied", "teardown": "Denied",
+    "blocked": "Denied", "drop": "Denied",
 }
 
 _SCHEMA_CACHE: dict | None = None
@@ -103,6 +104,10 @@ class OCSFMapper:
         unmapped: dict = dict(event.unmapped)  # parser-level unmapped — never dropped
 
         remaining_fields = dict(event.fields)
+        # reserved parser key: the event's own timestamp as epoch ms. Kept out of YAML
+        # field_maps, which double as the AI-assist example the local model imitates.
+        if "event_time" in remaining_fields:
+            out["time"] = remaining_fields.pop("event_time")
         for src_key, target_path in mapping.get("field_map", {}).items():
             if src_key not in remaining_fields:
                 continue
@@ -111,6 +116,8 @@ class OCSFMapper:
                 value = ACTION_DISPOSITION_MAP.get(str(value).lower(), str(value).title())
             else:
                 value = _coerce_to_schema_type(value, _expected_json_type(_load_schema(), target_path))
+            if target_path == "connection_info.protocol_name":
+                value = value.lower()  # OCSF protocol names are lowercase ("tcp"), whatever the vendor logs
             _set_path(out, target_path, value)
 
         # anything the parser extracted but this mapping doesn't declare — lossless bucket
@@ -155,6 +162,9 @@ def demo():
     assert ocsf_event["src_endpoint"]["ip"] == "10.10.1.20"
     assert ocsf_event["dst_endpoint"] == {"ip": "172.16.1.50", "port": 443}
     assert ocsf_event["disposition"] == "Allowed"
+    assert ocsf_event["connection_info"]["protocol_name"] == "tcp"
+    assert ocsf_event["src_endpoint"]["port"] == 52341
+    assert ocsf_event["time"] == 1788099751000  # Aug 30 2026 14:22:31 UTC
     assert ocsf_event["metadata"]["product"]["name"] == "Cisco ASA"
     assert {"name": "src_endpoint.ip", "value": "10.10.1.20"} in ocsf_event["observables"]
     assert ocsf_event["ulpf"]["mapping_confidence"] == 0.97

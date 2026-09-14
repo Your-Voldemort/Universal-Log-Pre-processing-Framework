@@ -1,4 +1,4 @@
-"""Seed a running ULPF API with testdata/demo_logs.txt — 45 realistic
+"""Seed a running ULPF API with testdata/demo_logs.txt — 51 realistic
 perimeter-device events (normal traffic, a denied port-scan burst, and 3
 unrecognized-format lines for the AI-assist demo) so the dashboard, search,
 drift, and compliance tabs have real content instead of an empty state."""

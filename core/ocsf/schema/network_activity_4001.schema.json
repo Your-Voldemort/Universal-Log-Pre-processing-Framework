@@ -13,6 +13,7 @@
     "type_uid": { "type": "integer" },
     "activity_id": { "type": "integer" },
     "activity_name": { "type": "string" },
+    "time": { "type": "integer" },
     "metadata": {
       "type": "object",
       "required": ["product", "version"],

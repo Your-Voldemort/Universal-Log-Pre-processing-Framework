@@ -21,6 +21,14 @@
 <166>Aug 30 2026 14:05:48 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847599 for dmz:172.16.1.52/80 (172.16.1.52/80) to inside:10.10.1.34/49518 (10.10.1.34/49518)
 <166>Aug 30 2026 14:06:08 ASA-FW01 : %ASA-6-302013: Built outbound UDP connection 8847670 for outside:172.16.2.11/53 (172.16.2.11/53) to inside:10.10.1.35/49555 (10.10.1.35/49555)
 
+# --- Cisco ASA — teardowns of earlier connections, and an inbound probe denied by ACL ---
+<166>Aug 30 2026 14:06:40 ASA-FW01 : %ASA-6-302014: Teardown TCP connection 8847034 for dmz:172.16.1.50/443 to inside:10.10.1.20/49000 duration 0:06:21 bytes 48213 TCP FINs
+<166>Aug 30 2026 14:06:52 ASA-FW01 : %ASA-6-302016: Teardown UDP connection 8847123 for outside:172.16.1.51/53 to inside:10.10.1.21/49037 duration 0:05:54 bytes 212
+<164>Aug 30 2026 14:12:03 ASA-FW01 : %ASA-4-106023: Deny tcp src outside:198.51.100.23/51522 dst inside:10.10.1.20/22 by access-group "OUTSIDE_IN" [0x0, 0x0]
+<162>Aug 30 2026 14:12:04 ASA-FW01 : %ASA-2-106001: Inbound TCP connection denied from 198.51.100.23/51523 to 10.10.1.20/3389 flags SYN on interface outside
+<162>Aug 30 2026 14:12:06 ASA-FW01 : %ASA-2-106006: Deny inbound UDP from 198.51.100.23/51524 to 10.10.1.20/161 on interface outside
+<166>Aug 30 2026 14:12:09 ASA-FW01 : %ASA-6-106100: access-list OUTSIDE_IN denied tcp outside/198.51.100.23(51525) -> inside/10.10.1.20(445) hit-cnt 1 first hit [0x1a2b3c4d, 0x0]
+
 # --- Palo Alto CEF (source: paloalto_cef) — normal traffic, mostly allowed ---
 CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:03:42 src=10.2.4.23 dst=198.51.100.20 spt=50000 dpt=22 proto=tcp act=allow deviceExternalId=PA-VM-01
 CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:03:49 src=10.2.4.31 dst=172.20.1.8 spt=50023 dpt=80 proto=tcp act=allow deviceExternalId=PA-VM-02
