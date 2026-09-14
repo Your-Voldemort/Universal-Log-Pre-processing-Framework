@@ -7,7 +7,7 @@ class SchemaDriftFirewall:
         self._signatures: dict[str, dict[str, type]] = {}
         self._quarantine = quarantine_store
 
-    def check(self, source_format: str, fields: dict) -> dict | None:
+    def check(self, source_format: str, fields: dict, raw_event_id: str | None = None) -> dict | None:
         known = self._signatures.setdefault(
             source_format, {k: type(v) for k, v in fields.items()}
         )
@@ -19,7 +19,7 @@ class SchemaDriftFirewall:
         new_fields = sorted(set(fields) - set(known))
         if type_drift or new_fields:
             alert = {"source": source_format, "type_drift": type_drift, "new_fields": new_fields}
-            self._quarantine.hold(source_format, fields, alert)
+            self._quarantine.hold(source_format, fields, alert, raw_event_id)
             return alert
         return None
 
@@ -31,7 +31,7 @@ def demo():
         def __init__(self):
             self.held = []
 
-        def hold(self, source_format, fields, alert):
+        def hold(self, source_format, fields, alert, raw_event_id=None):
             self.held.append((source_format, fields, alert))
             return len(self.held)
 

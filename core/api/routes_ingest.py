@@ -22,7 +22,7 @@ async def ingest(request: Request):
     event = parser.parse(raw_bytes)
     chain_record = state.raw_store.append(event.source_format, raw_bytes)
 
-    drift_alert = state.drift_firewall.check(event.source_format, event.fields)
+    drift_alert = state.drift_firewall.check(event.source_format, event.fields, chain_record["event_id"])
     if drift_alert:
         return {
             "status": "quarantined",

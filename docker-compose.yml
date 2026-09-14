@@ -20,6 +20,7 @@ services:
       - OLLAMA_MODEL=qwen2.5:3b
     volumes:
       - raw_data:/app/data/raw
+      - approved_mappings:/app/ocsf/mappings/approved   # AI-assist formats a human approved
     ports:
       - "8000:8000"
     networks: [ulpf_net]
@@ -56,3 +57,4 @@ volumes:
   pgdata:
   ollama_models:
   raw_data:
+  approved_mappings:

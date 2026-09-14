@@ -46,6 +46,8 @@ SCHEMA_STATEMENTS = [
         status TEXT NOT NULL DEFAULT 'quarantine',
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )""",
+    # added after first release — ALTER, so existing databases pick it up too
+    "ALTER TABLE quarantine_events ADD COLUMN IF NOT EXISTS raw_event_id TEXT REFERENCES raw_events(event_id)",
     """CREATE TABLE IF NOT EXISTS mapping_proposals (
         id SERIAL PRIMARY KEY,
         source_format TEXT NOT NULL,

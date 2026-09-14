@@ -6,6 +6,7 @@ import { api, QuarantineItem } from "@/lib/api";
 export default function DriftAlerts() {
   const [items, setItems] = useState<QuarantineItem[]>([]);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = () => api.quarantineList().then(setItems);
 
@@ -17,9 +18,12 @@ export default function DriftAlerts() {
 
   const resolve = async (id: number, action: "quarantine" | "auto-fix" | "ignore") => {
     setBusyId(id);
+    setError(null);
     try {
       await api.resolveQuarantine(id, action);
       await refresh();
+    } catch (e) {
+      setError(String(e));
     } finally {
       setBusyId(null);
     }
@@ -27,6 +31,7 @@ export default function DriftAlerts() {
 
   return (
     <div className="space-y-3">
+      {error && <div className="text-xs text-crit">{error}</div>}
       {items.length === 0 && (
         <div className="text-fg3 text-sm">
           Quarantine queue is empty. Use the "Inject malformed log" button on the Dashboard tab to
@@ -39,6 +44,7 @@ export default function DriftAlerts() {
             <div className="flex items-center gap-2 font-mono text-xs text-warn">
               <span className="lamp lamp-live h-1.5 w-1.5 bg-warn" />
               {item.source_format} — quarantine #{item.id}
+              {item.raw_event_id && <span className="text-fg3">· {item.raw_event_id}</span>}
             </div>
             <span className="text-fg3 border border-line px-2 py-0.5 text-[10px] uppercase tracking-wider2">
               {item.status}

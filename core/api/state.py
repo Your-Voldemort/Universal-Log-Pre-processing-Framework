@@ -44,12 +44,18 @@ def init() -> None:
     from drift.firewall import SchemaDriftFirewall
     from drift.quarantine_store import QuarantineStore
     from ocsf.mapper import OCSFMapper
+    from parsers.generic_kv import DynamicKVParser
     from parsers.registry import build_default_registry
     from storage.normalized_store import NormalizedStore
     from storage.raw_store import RawStore
 
     state.registry = build_default_registry()
     state.mapper = OCSFMapper()
+    # formats approved via AI-assist in an earlier run: the mapper reloads their
+    # YAML from disk, so re-register their parser too or they fall back to unknown_format
+    for source_format, mapping in state.mapper.mappings.items():
+        if state.registry.get(source_format) is None:
+            state.registry.register(DynamicKVParser(source_format, set(mapping["field_map"])))
     state.raw_store = RawStore()
     state.normalized_store = NormalizedStore()
     state.quarantine_store = QuarantineStore()

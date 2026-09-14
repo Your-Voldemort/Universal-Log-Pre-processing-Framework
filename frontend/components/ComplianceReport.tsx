@@ -52,7 +52,7 @@ export default function ComplianceReport() {
               CERT-In Incident Report
             </span>
             <span className="font-mono text-[10px] uppercase tracking-wider2 text-brassDim">
-              ULPF · Certified Export
+              ULPF · Draft for review
             </span>
           </div>
           <pre className="max-h-[30rem] overflow-auto whitespace-pre-wrap font-mono text-xs text-[#1E1808]">

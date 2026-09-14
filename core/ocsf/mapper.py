@@ -76,20 +76,20 @@ class OCSFMapper:
     file dropped in MAPPINGS_DIR — never a code change."""
 
     def __init__(self):
-        self._mappings: dict[str, dict] = {}
-        for yaml_file in MAPPINGS_DIR.glob("*.yaml"):
+        self.mappings: dict[str, dict] = {}
+        for yaml_file in MAPPINGS_DIR.rglob("*.yaml"):  # includes approved/ (human-approved AI-assist formats)
             mapping = yaml.safe_load(yaml_file.read_text())
-            self._mappings[mapping["source_format"]] = mapping
+            self.mappings[mapping["source_format"]] = mapping
 
     def register_mapping(self, mapping: dict) -> None:
         """Used by the AI-assist approval flow to hot-load a new mapping."""
-        self._mappings[mapping["source_format"]] = mapping
+        self.mappings[mapping["source_format"]] = mapping
 
     def has_mapping(self, source_format: str) -> bool:
-        return source_format in self._mappings
+        return source_format in self.mappings
 
     def map(self, event: ParsedEvent, mapping_confidence: float, raw_event_id: str) -> dict:
-        mapping = self._mappings[event.source_format]
+        mapping = self.mappings[event.source_format]
 
         out: dict = {
             "class_uid": mapping["ocsf_class_uid"],

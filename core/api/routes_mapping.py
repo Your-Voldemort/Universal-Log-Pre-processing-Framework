@@ -15,6 +15,7 @@ router = APIRouter()
 proposal_store = ProposalStore()
 
 MAPPINGS_DIR = Path(__file__).parent.parent / "ocsf" / "mappings"
+APPROVED_DIR = MAPPINGS_DIR / "approved"  # its own Docker volume, so approvals survive image rebuilds
 EXAMPLE_MAPPING_YAML = (MAPPINGS_DIR / "cisco_asa_syslog.yaml").read_text()
 
 
@@ -60,7 +61,8 @@ def approve(proposal_id: int):
 
     mapping = parse_and_validate_mapping(proposal["proposed_yaml"])
 
-    mapping_path = MAPPINGS_DIR / f"{mapping['source_format']}.yaml"
+    APPROVED_DIR.mkdir(exist_ok=True)
+    mapping_path = APPROVED_DIR / f"{mapping['source_format']}.yaml"
     mapping_path.write_text(yaml.dump(mapping, sort_keys=False))
 
     state.mapper.register_mapping(mapping)

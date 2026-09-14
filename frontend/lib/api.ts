@@ -34,6 +34,7 @@ export interface QuarantineItem {
   alert: { type_drift: Record<string, unknown>; new_fields: string[] };
   status: string;
   created_at: string;
+  raw_event_id: string | null;
 }
 
 export interface MappingProposal {
