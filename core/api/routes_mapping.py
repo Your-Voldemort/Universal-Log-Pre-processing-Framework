@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from ai_assist.mapping_prompt import build_prompt
 from ai_assist.ollama_client import parse_and_validate_mapping, propose_mapping
 from ai_assist.proposal_store import ProposalStore
+from api.routes_ingest import replay_unrecognized
 from api.state import state
 from parsers.generic_kv import DynamicKVParser
 
@@ -85,7 +86,8 @@ def approve(proposal_id: int):
         state.mapper.register_mapping(mapping)
         state.registry.register(DynamicKVParser(source_format, set(mapping["field_map"])))
         proposal_store.set_status(proposal_id, "approved")
-    return {"status": "approved", "source_format": source_format}
+    # events that arrived before this format existed get normalized now, not left stranded
+    return {"status": "approved", "source_format": source_format, "replayed": replay_unrecognized()}
 
 
 @router.post("/mapping/{proposal_id}/reject")

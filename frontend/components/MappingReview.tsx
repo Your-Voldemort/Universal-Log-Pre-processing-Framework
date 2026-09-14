@@ -18,6 +18,7 @@ export default function MappingReview() {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const refresh = () => api.listProposals().then(setProposals);
 
@@ -41,8 +42,17 @@ export default function MappingReview() {
   const review = async (id: number, action: "approve" | "reject") => {
     setBusyId(id);
     setReviewError(null);
+    setNotice(null);
     try {
-      await (action === "approve" ? api.approveMapping(id) : api.rejectMapping(id));
+      if (action === "approve") {
+        const { source_format, replayed } = await api.approveMapping(id);
+        setNotice(
+          `${source_format} is active. Earlier unrecognized events replayed: ${replayed.normalized} normalized, ` +
+            `${replayed.quarantined} quarantined, ${replayed.still_unrecognized} still unrecognized.`,
+        );
+      } else {
+        await api.rejectMapping(id);
+      }
       await refresh();
     } catch (e) {
       setReviewError(String(e));
@@ -80,6 +90,7 @@ export default function MappingReview() {
 
       <div className="space-y-3">
         {reviewError && <div className="text-xs text-crit">{reviewError}</div>}
+        {notice && <div className="text-xs text-ok">{notice}</div>}
         {proposals.map((p) => (
           <div key={p.id} className="border border-line bg-panel p-4">
             <div className="mb-2.5 flex items-center justify-between">

@@ -160,6 +160,7 @@ Both are host-environment issues, not application bugs — standard/Desktop Dock
 | Method | Path | Purpose |
 |---|---|---|
 | `POST` | `/ingest` | Raw log bytes in → parsed, mapped, stored, or quarantined |
+| `POST` | `/ingest/replay` | Re-routes raw events stored as unrecognized through the current parsers — raw bytes and hash chain untouched; returns counts |
 | `GET` | `/search?q=&source=&time_range=&limit=` | Substring search over normalized events; `time_range` is an ISO 8601 interval on event time, e.g. `2026-08-30T14:00Z/2026-08-30T15:00Z` (either side may be empty, no zone = UTC) |
 | `GET` | `/events/{raw_event_id}` | Raw log + normalized OCSF event, cross-referenced |
 | `GET` | `/verify-chain` | Replays the full hash chain and re-hashes every raw event from disk — `true` unless tampered |
@@ -169,7 +170,8 @@ Both are host-environment issues, not application bugs — standard/Desktop Dock
 | `POST` | `/drift/inject-malformed` | Demo button — flips a known field's type to trigger drift |
 | `POST` | `/mapping/propose` | `{"raw_samples": "..."}` → local-LLM-drafted OCSF mapping |
 | `GET` | `/mapping/proposals` | List pending/approved proposals |
-| `POST` | `/mapping/{id}/approve` | Human approval — writes the YAML, hot-reloads the parser registry |
+| `POST` | `/mapping/{id}/approve` | Human approval — writes the YAML, hot-reloads the parser registry, then replays earlier unrecognized events |
+| `POST` | `/mapping/{id}/reject` | Rejects a pending proposal |
 | `POST` | `/compliance/report` | `{"raw_event_ids": [...]}` → CERT-In-format Markdown report |
 | `GET` | `/compliance/profile` | Active retention/jurisdiction/NTP profile |
 

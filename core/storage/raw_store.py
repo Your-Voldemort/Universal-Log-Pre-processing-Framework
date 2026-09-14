@@ -92,6 +92,20 @@ class RawStore:
             f.seek(offset)
             return f.read(length)
 
+    def unprocessed_event_ids(self, source_format: str) -> list[str]:
+        """Raw events stored under source_format with neither a normalized row nor a
+        quarantine row — what a replay still has to route."""
+        with get_conn() as conn:
+            rows = conn.execute(
+                """SELECT r.event_id FROM raw_events r
+                   WHERE r.source_format = %s
+                     AND NOT EXISTS (SELECT 1 FROM normalized_events n WHERE n.raw_event_id = r.event_id)
+                     AND NOT EXISTS (SELECT 1 FROM quarantine_events q WHERE q.raw_event_id = r.event_id)
+                   ORDER BY r.ingested_at""",
+                (source_format,),
+            ).fetchall()
+        return [r[0] for r in rows]
+
     def verify_chain(self) -> bool:
         """Replays the hash chain, then re-hashes every event's bytes from disk, so
         an edited, truncated or deleted raw log file fails, not only an edited DB row.

@@ -98,7 +98,7 @@ export const api = {
     fetch(`/mapping/proposals${status ? `?status=${status}` : ""}`).then((r) => json<MappingProposal[]>(r)),
 
   approveMapping: (id: number) =>
-    fetch(`/mapping/${id}/approve`, { method: "POST" }).then((r) => json<{ status: string; source_format: string }>(r)),
+    fetch(`/mapping/${id}/approve`, { method: "POST" }).then((r) => json<{ status: string; source_format: string; replayed: Record<string, number> }>(r)),
 
   rejectMapping: (id: number) =>
     fetch(`/mapping/${id}/reject`, { method: "POST" }).then((r) => json<{ status: string; id: number }>(r)),
