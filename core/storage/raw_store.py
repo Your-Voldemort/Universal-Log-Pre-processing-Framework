@@ -40,7 +40,7 @@ class RawStore:
         self._lock = threading.Lock()
         with get_conn() as conn:
             row = conn.execute("SELECT last_hash FROM chain_state WHERE id = 1").fetchone()
-        self._chain = HashChain(genesis=row[0] if row else GENESIS)
+        self._last_hash = row[0] if row else GENESIS  # chain head, advanced only after a commit
         self._last_verified = (float("-inf"), True)  # (monotonic time, result) for verify_chain_cached
 
     def append(self, source_format: str, raw_bytes: bytes) -> dict:
@@ -54,10 +54,12 @@ class RawStore:
                 offset = f.tell()
                 f.write(raw_bytes + b"\n")
 
-            chain_record = self._chain.append(raw_bytes)
+            chain_record = HashChain(genesis=self._last_hash).append(raw_bytes)
             event_id = f"evt_{uuid.uuid4().hex[:12]}"
 
-            with get_conn() as conn:
+            # one transaction: the index row and the chain head move together or not at
+            # all — a crash between them would leave the stored chain permanently broken
+            with get_conn() as conn, conn.transaction():
                 conn.execute(
                     """INSERT INTO raw_events
                        (event_id, source_format, file_path, file_offset, byte_length,
@@ -73,6 +75,7 @@ class RawStore:
                     "UPDATE chain_state SET last_hash = %s WHERE id = 1",
                     (chain_record["chain_hash"],),
                 )
+            self._last_hash = chain_record["chain_hash"]  # only once the transaction committed
 
             return {"event_id": event_id, **chain_record}
 
@@ -95,10 +98,11 @@ class RawStore:
         with get_conn() as conn:
             rows = conn.execute(
                 "SELECT event_hash, prev_chain_hash, chain_hash, file_path, file_offset, byte_length "
-                "FROM raw_events ORDER BY ingested_at"
+                "FROM raw_events"
             ).fetchall()
         records = [{"event_hash": r[0], "prev_chain_hash": r[1], "chain_hash": r[2]} for r in rows]
-        verified = HashChain.verify(records) and raw_bytes_intact(
+        ordered = HashChain.order_by_links(records)  # by links, never by timestamps
+        verified = ordered is not None and HashChain.verify(ordered) and raw_bytes_intact(
             [(r[0], r[3], r[4], r[5]) for r in rows], RAW_DATA_DIR
         )
         self._last_verified = (time.monotonic(), verified)

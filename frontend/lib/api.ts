@@ -93,6 +93,9 @@ export const api = {
   approveMapping: (id: number) =>
     fetch(`/mapping/${id}/approve`, { method: "POST" }).then((r) => json<{ status: string; source_format: string }>(r)),
 
+  rejectMapping: (id: number) =>
+    fetch(`/mapping/${id}/reject`, { method: "POST" }).then((r) => json<{ status: string; id: number }>(r)),
+
   complianceReport: (rawEventIds: string[]) =>
     fetch("/compliance/report", {
       method: "POST",

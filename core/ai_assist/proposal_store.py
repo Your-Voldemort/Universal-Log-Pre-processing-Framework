@@ -40,6 +40,6 @@ class ProposalStore:
                 ).fetchall()
         return [_row_to_dict(r) for r in rows]
 
-    def mark_approved(self, proposal_id: int) -> None:
+    def set_status(self, proposal_id: int, status: str) -> None:
         with get_conn() as conn:
-            conn.execute("UPDATE mapping_proposals SET status = 'approved' WHERE id = %s", (proposal_id,))
+            conn.execute("UPDATE mapping_proposals SET status = %s WHERE id = %s", (status, proposal_id))

@@ -23,6 +23,10 @@ VALID_OCSF_TARGETS = {
 
 _CODE_FENCE = re.compile(r"^```(?:yaml)?\s*|\s*```$", re.MULTILINE)
 
+# source_format becomes a filename (ocsf/mappings/approved/<name>.yaml) and comes from
+# model output that raw log text can steer — plain names only, no path characters.
+SOURCE_FORMAT_NAME = re.compile(r"[A-Za-z][A-Za-z0-9_-]{0,63}")
+
 
 def extract_yaml(model_response_text: str) -> str:
     return _CODE_FENCE.sub("", model_response_text).strip()
@@ -35,6 +39,8 @@ def parse_and_validate_mapping(yaml_text: str) -> dict:
     missing = REQUIRED_MAPPING_KEYS - mapping.keys()
     if missing:
         raise ValueError(f"proposed mapping missing required keys: {missing}")
+    if not isinstance(mapping["source_format"], str) or not SOURCE_FORMAT_NAME.fullmatch(mapping["source_format"]):
+        raise ValueError(f"source_format {mapping['source_format']!r} must be a plain name like fortigate_kv")
 
     field_map = mapping["field_map"]
     if not isinstance(field_map, dict) or not field_map:
@@ -97,6 +103,14 @@ field_map:
     assert mapping["source_format"] == "fortigate_kv"
     assert mapping["field_map"]["srcip"] == "src_endpoint.ip"
     assert mapping["activity_name"] == "Connection Attempt"  # default filled in
+
+    # source_format is used as a filename: path characters must never get through
+    for bad_name in ("../../parsers/registry", "a/b", "'fortigate kv'", "''"):
+        try:
+            parse_and_validate_mapping(yaml_text.replace("source_format: fortigate_kv", f"source_format: {bad_name}"))
+            raise AssertionError(f"should have rejected source_format {bad_name}")
+        except ValueError:
+            pass
 
     try:
         parse_and_validate_mapping("just: a\nrandom: mapping")

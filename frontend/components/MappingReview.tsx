@@ -16,6 +16,8 @@ export default function MappingReview() {
   const [proposals, setProposals] = useState<MappingProposal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   const refresh = () => api.listProposals().then(setProposals);
 
@@ -36,9 +38,17 @@ export default function MappingReview() {
     }
   };
 
-  const approve = async (id: number) => {
-    await api.approveMapping(id);
-    await refresh();
+  const review = async (id: number, action: "approve" | "reject") => {
+    setBusyId(id);
+    setReviewError(null);
+    try {
+      await (action === "approve" ? api.approveMapping(id) : api.rejectMapping(id));
+      await refresh();
+    } catch (e) {
+      setReviewError(String(e));
+    } finally {
+      setBusyId(null);
+    }
   };
 
   return (
@@ -69,6 +79,7 @@ export default function MappingReview() {
       </div>
 
       <div className="space-y-3">
+        {reviewError && <div className="text-xs text-crit">{reviewError}</div>}
         {proposals.map((p) => (
           <div key={p.id} className="border border-line bg-panel p-4">
             <div className="mb-2.5 flex items-center justify-between">
@@ -82,14 +93,23 @@ export default function MappingReview() {
             <pre className="readout mb-3 max-h-48 overflow-auto p-3 font-mono text-xs text-fg2">
               {p.proposed_yaml}
             </pre>
-            <button
-              onClick={() => approve(p.id)}
-              disabled={p.status !== "pending"}
-              className="flex items-center gap-2 border border-ok/50 bg-ok/10 px-3 py-1.5 text-xs font-medium text-ok transition-colors hover:bg-ok/20 disabled:opacity-40"
-            >
-              <StepBadge n={2} />
-              Approve — activate this parser
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => review(p.id, "approve")}
+                disabled={p.status !== "pending" || busyId === p.id}
+                className="flex items-center gap-2 border border-ok/50 bg-ok/10 px-3 py-1.5 text-xs font-medium text-ok transition-colors hover:bg-ok/20 disabled:opacity-40"
+              >
+                <StepBadge n={2} />
+                Approve — activate this parser
+              </button>
+              <button
+                onClick={() => review(p.id, "reject")}
+                disabled={p.status !== "pending" || busyId === p.id}
+                className="border border-line px-3 py-1.5 text-xs text-fg2 transition-colors hover:border-crit/50 hover:text-crit disabled:opacity-40"
+              >
+                Reject
+              </button>
+            </div>
           </div>
         ))}
         {proposals.length === 0 && (
