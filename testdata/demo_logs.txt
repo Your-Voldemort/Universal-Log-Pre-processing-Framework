@@ -1,0 +1,60 @@
+# ULPF demo dataset — realistic perimeter-device traffic for filling out the
+# dashboard, search, and compliance-report tabs with real content. RFC 5737
+# documentation ranges (203.0.113.0/24, 198.51.100.0/24, 192.0.2.0/24) stand
+# in for "internet" destinations — safe to demo, never a real address.
+
+# --- Cisco ASA syslog (source: cisco_asa_syslog) ---
+<166>Aug 30 2026 14:00:19 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847034 for dmz:172.16.1.50/443 (172.16.1.50/443) to inside:10.10.1.20/49000 (10.10.1.20/49000)
+<166>Aug 30 2026 14:00:58 ASA-FW01 : %ASA-6-302013: Built outbound UDP connection 8847123 for outside:172.16.1.51/53 (172.16.1.51/53) to inside:10.10.1.21/49037 (10.10.1.21/49037)
+<166>Aug 30 2026 14:01:04 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847130 for dmz:172.16.1.50/8080 (172.16.1.50/8080) to inside:10.10.1.22/49074 (10.10.1.22/49074)
+<166>Aug 30 2026 14:01:10 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847197 for outside:172.16.1.50/80 (172.16.1.50/80) to inside:10.10.1.23/49111 (10.10.1.23/49111)
+<166>Aug 30 2026 14:01:43 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847228 for dmz:172.16.2.11/80 (172.16.2.11/80) to inside:10.10.1.24/49148 (10.10.1.24/49148)
+<166>Aug 30 2026 14:02:15 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847251 for outside:172.16.2.11/22 (172.16.2.11/22) to inside:10.10.1.25/49185 (10.10.1.25/49185)
+<166>Aug 30 2026 14:02:41 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847281 for outside:172.16.1.52/22 (172.16.1.52/22) to inside:10.10.1.26/49222 (10.10.1.26/49222)
+<166>Aug 30 2026 14:03:08 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847296 for dmz:172.16.1.50/443 (172.16.1.50/443) to inside:10.10.1.27/49259 (10.10.1.27/49259)
+<166>Aug 30 2026 14:03:42 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847304 for dmz:172.16.1.52/8080 (172.16.1.52/8080) to inside:10.10.1.28/49296 (10.10.1.28/49296)
+<166>Aug 30 2026 14:04:22 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847317 for dmz:172.16.2.11/443 (172.16.2.11/443) to inside:10.10.1.29/49333 (10.10.1.29/49333)
+<166>Aug 30 2026 14:04:39 ASA-FW01 : %ASA-6-302013: Built outbound UDP connection 8847393 for dmz:172.16.1.52/123 (172.16.1.52/123) to inside:10.10.1.30/49370 (10.10.1.30/49370)
+<166>Aug 30 2026 14:04:49 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847433 for outside:172.16.1.50/443 (172.16.1.50/443) to inside:10.10.1.31/49407 (10.10.1.31/49407)
+<166>Aug 30 2026 14:05:11 ASA-FW01 : %ASA-6-302013: Built outbound UDP connection 8847484 for outside:172.16.1.51/123 (172.16.1.51/123) to inside:10.10.1.32/49444 (10.10.1.32/49444)
+<166>Aug 30 2026 14:05:39 ASA-FW01 : %ASA-6-302013: Built outbound UDP connection 8847507 for dmz:172.16.2.10/53 (172.16.2.10/53) to inside:10.10.1.33/49481 (10.10.1.33/49481)
+<166>Aug 30 2026 14:05:48 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847599 for dmz:172.16.1.52/80 (172.16.1.52/80) to inside:10.10.1.34/49518 (10.10.1.34/49518)
+<166>Aug 30 2026 14:06:08 ASA-FW01 : %ASA-6-302013: Built outbound UDP connection 8847670 for outside:172.16.2.11/53 (172.16.2.11/53) to inside:10.10.1.35/49555 (10.10.1.35/49555)
+
+# --- Palo Alto CEF (source: paloalto_cef) — normal traffic, mostly allowed ---
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:03:42 src=10.2.4.23 dst=198.51.100.20 spt=50000 dpt=22 proto=tcp act=allow deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:03:49 src=10.2.4.31 dst=172.20.1.8 spt=50023 dpt=80 proto=tcp act=allow deviceExternalId=PA-VM-02
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:04:07 src=10.2.4.45 dst=198.51.100.14 spt=50046 dpt=443 proto=tcp act=allow deviceExternalId=PA-VM-02
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:04:41 src=10.2.4.24 dst=198.51.100.20 spt=50069 dpt=22 proto=tcp act=allow deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:05:21 src=10.2.4.30 dst=172.20.1.9 spt=50092 dpt=80 proto=tcp act=allow deviceExternalId=PA-VM-02
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:05:49 src=10.2.4.45 dst=192.0.2.5 spt=50115 dpt=22 proto=tcp act=allow deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:05:59 src=10.2.4.23 dst=192.0.2.5 spt=50138 dpt=22 proto=tcp act=allow deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:06:31 src=10.2.4.22 dst=172.20.1.9 spt=50161 dpt=80 proto=tcp act=allow deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:07:05 src=10.2.4.45 dst=198.51.100.20 spt=50184 dpt=25 proto=tcp act=allow deviceExternalId=PA-VM-02
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:07:27 src=10.2.4.21 dst=172.20.1.8 spt=50207 dpt=25 proto=tcp act=allow deviceExternalId=PA-VM-02
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:07:42 src=10.2.4.22 dst=198.51.100.14 spt=50230 dpt=22 proto=tcp act=allow deviceExternalId=PA-VM-02
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:07:58 src=10.2.4.21 dst=198.51.100.14 spt=50253 dpt=25 proto=tcp act=allow deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:08:15 src=10.2.4.30 dst=192.0.2.5 spt=50276 dpt=25 proto=tcp act=allow deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:08:53 src=10.2.4.31 dst=172.20.1.9 spt=50299 dpt=25 proto=tcp act=allow deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:09:05 src=10.2.4.31 dst=198.51.100.20 spt=50322 dpt=443 proto=tcp act=allow deviceExternalId=PA-VM-02
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:09:25 src=10.2.4.30 dst=172.20.1.9 spt=50345 dpt=443 proto=tcp act=allow deviceExternalId=PA-VM-01
+
+# --- Palo Alto CEF — a scripted probe against the DMZ, denied by policy ---
+# (same external source hitting a spread of internal ports in quick succession —
+# a realistic pattern for a Compliance Report demo: flag these raw_event_ids.)
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-deny|3|rt=Aug 30 2026 14:15:01 src=203.0.113.44 dst=172.20.1.8 spt=40100 dpt=21 proto=tcp act=deny deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-deny|3|rt=Aug 30 2026 14:15:05 src=203.0.113.44 dst=172.20.1.8 spt=40101 dpt=23 proto=tcp act=deny deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-deny|3|rt=Aug 30 2026 14:15:06 src=203.0.113.44 dst=172.20.1.8 spt=40102 dpt=135 proto=tcp act=deny deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-deny|3|rt=Aug 30 2026 14:15:08 src=203.0.113.44 dst=172.20.1.8 spt=40103 dpt=445 proto=tcp act=deny deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-deny|3|rt=Aug 30 2026 14:15:10 src=203.0.113.44 dst=172.20.1.8 spt=40104 dpt=1433 proto=tcp act=deny deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-deny|3|rt=Aug 30 2026 14:15:14 src=203.0.113.44 dst=172.20.1.8 spt=40105 dpt=3306 proto=tcp act=deny deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-deny|3|rt=Aug 30 2026 14:15:16 src=203.0.113.44 dst=172.20.1.8 spt=40106 dpt=3389 proto=tcp act=deny deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-deny|3|rt=Aug 30 2026 14:15:19 src=203.0.113.44 dst=172.20.1.8 spt=40107 dpt=5432 proto=tcp act=deny deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-deny|3|rt=Aug 30 2026 14:15:23 src=203.0.113.44 dst=172.20.1.8 spt=40108 dpt=8080 proto=tcp act=deny deviceExternalId=PA-VM-01
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-deny|3|rt=Aug 30 2026 14:15:25 src=203.0.113.44 dst=172.20.1.8 spt=40109 dpt=9200 proto=tcp act=deny deviceExternalId=PA-VM-01
+
+# --- Unknown format (source: fortigate_kv) — routes to AI-assist until a
+# mapping is proposed and approved via the AI Mapping Review tab. ---
+date=2026-08-30 time=14:01:14 devname="FGT-EDGE-01" logid="0000000013" type="traffic" srcip=10.5.2.14 dstip=203.0.113.44 dstport=8080 proto=6 action="accept" policyid=12
+date=2026-08-30 time=14:02:12 devname="FGT-EDGE-01" logid="0000000014" type="traffic" srcip=10.5.2.15 dstip=198.51.100.77 dstport=443 proto=6 action="accept" policyid=13
+date=2026-08-30 time=14:03:08 devname="FGT-EDGE-01" logid="0000000015" type="traffic" srcip=10.5.2.16 dstip=192.0.2.9 dstport=22 proto=6 action="deny" policyid=14

@@ -1,0 +1,11 @@
+# Cisco ASA syslog (known format 1)
+# Expected: src_ip=10.10.1.20, dst_ip=172.16.1.50, src_port=52341, dst_port=443, proto=TCP, action=Built -> disposition=Allowed
+<166>Aug 30 2026 14:22:31 ASA-FW01 : %ASA-6-302013: Built outbound TCP connection 8847123 for outside:172.16.1.50/443 (172.16.1.50/443) to inside:10.10.1.20/52341 (10.10.1.20/52341)
+
+# Palo Alto CEF (known format 2)
+# Expected: src_ip=10.2.4.21, dst_ip=172.20.1.8, src_port=52341, dst_port=443, proto=tcp, action=allow -> disposition=Allowed
+CEF:0|Palo Alto Networks|PAN-OS|11.0.0|traffic|traffic-allow|1|rt=Aug 30 2026 14:22:31 src=10.2.4.21 dst=172.20.1.8 spt=52341 dpt=443 proto=tcp act=allow deviceExternalId=PA-VM-01
+
+# Unknown format — FortiGate-style key=value, intentionally unsupported by
+# any built-in parser. Should score below 0.7 confidence and route to AI-assist.
+date=2026-08-30 time=14:22:31 devname="FGT-EDGE-01" logid="0000000013" type="traffic" srcip=10.5.2.14 dstip=203.0.113.44 dstport=8080 proto=6 action="accept" policyid=12

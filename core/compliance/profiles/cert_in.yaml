@@ -1,0 +1,5 @@
+regulator: CERT-In
+retention_days: 180
+jurisdiction: India
+incident_report_deadline_hours: 6
+ntp_server: time.nplindia.org   # NPL/NIC-aligned time sync, per CERT-In Directions 2022

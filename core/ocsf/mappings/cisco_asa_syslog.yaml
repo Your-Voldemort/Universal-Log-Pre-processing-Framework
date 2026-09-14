@@ -1,0 +1,19 @@
+source_format: cisco_asa_syslog
+ocsf_class_uid: 4001          # Network Activity
+ocsf_category_uid: 4
+activity_id: 1
+activity_name: "Connection Attempt"
+field_map:
+  src_ip: src_endpoint.ip
+  dst_ip: dst_endpoint.ip
+  dst_port: dst_endpoint.port
+  action: disposition
+  proto: connection_info.protocol_name
+static_fields:
+  metadata.product.name: "Cisco ASA"
+  metadata.product.vendor_name: "Cisco"
+  metadata.version: "1.9.0"    # OCSF schema version targeted
+unmapped_bucket: "unmapped"     # any field not listed above lands here — this is what makes it lossless
+observable_fields:
+  - src_endpoint.ip
+  - dst_endpoint.ip

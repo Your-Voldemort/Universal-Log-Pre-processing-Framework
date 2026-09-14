@@ -1,0 +1,20 @@
+source_format: paloalto_cef
+ocsf_class_uid: 4001          # Network Activity
+ocsf_category_uid: 4
+activity_id: 1
+activity_name: "Connection Attempt"
+field_map:
+  src_ip: src_endpoint.ip
+  dst_ip: dst_endpoint.ip
+  src_port: src_endpoint.port
+  dst_port: dst_endpoint.port
+  action: disposition
+  proto: connection_info.protocol_name
+static_fields:
+  metadata.product.name: "PAN-OS"
+  metadata.product.vendor_name: "Palo Alto Networks"
+  metadata.version: "1.9.0"
+unmapped_bucket: "unmapped"
+observable_fields:
+  - src_endpoint.ip
+  - dst_endpoint.ip

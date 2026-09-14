@@ -1,0 +1,58 @@
+services:
+  vector:
+    image: timberio/vector:0.42.0-debian
+    command: ["--config", "/etc/vector/vector.toml"]
+    volumes:
+      - ./vector/vector.toml:/etc/vector/vector.toml:ro
+    ports:
+      - "514:514/udp"
+      - "514:514/tcp"
+      - "8080:8080"
+    depends_on: [ulpf-api]
+    networks: [ulpf_net]
+
+  ulpf-api:
+    build: ./core
+    depends_on: [postgres, ollama]
+    environment:
+      - DATABASE_URL=postgresql://ulpf:ulpf@postgres:5432/ulpf
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=qwen2.5:3b
+    volumes:
+      - raw_data:/app/data/raw
+    ports:
+      - "8000:8000"
+    networks: [ulpf_net]
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=ulpf
+      - POSTGRES_PASSWORD=ulpf
+      - POSTGRES_DB=ulpf
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [ulpf_net]
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_models:/root/.ollama   # model pre-pulled during setup, not at runtime
+    networks: [ulpf_net]
+
+  frontend:
+    build: ./frontend  # API_BASE_URL is baked in at build time — see frontend/Dockerfile
+    depends_on: [ulpf-api]
+    ports:
+      - "3000:3000"
+    networks: [ulpf_net]
+
+networks:
+  ulpf_net:
+    driver: bridge          # add `internal: true` here for the air-gap demo (verified working —
+                             # zero external route, full pipeline still ingests/maps/verifies)
+
+volumes:
+  pgdata:
+  ollama_models:
+  raw_data:

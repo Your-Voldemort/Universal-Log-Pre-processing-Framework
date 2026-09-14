@@ -4,3 +4,73 @@ _bmad*/
 .claude/
 .opencode/
 .zencoder/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.venv/
+venv/
+ENV/
+env/
+.python-version
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Frontend / Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.next/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.local
+secrets.*
+
+# Docker / local runtime
+.docker/
+*.pid
+logs/
+*.log
+tmp/
+temp/
+*.tmp
+*.swp
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.code-workspace
+.~lock.*#
+
+# Project data / generated artifacts
+core/data/
+vector/*
+!vector/vector.toml
+benchmark/.pytest_cache/
+
+# Test / coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/

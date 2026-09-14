@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OCSF Network Activity (class_uid 4001) — ULPF vendored subset",
+  "description": "Minimal structural schema for the OCSF fields ULPF actually populates for perimeter-device Network Activity events. Vendored locally so validation never requires a runtime fetch of the full ocsf/ocsf-schema project.",
+  "type": "object",
+  "required": [
+    "class_uid", "category_uid", "type_uid", "activity_id", "activity_name",
+    "metadata", "disposition", "observables", "unmapped", "ulpf"
+  ],
+  "properties": {
+    "class_uid": { "const": 4001 },
+    "category_uid": { "const": 4 },
+    "type_uid": { "type": "integer" },
+    "activity_id": { "type": "integer" },
+    "activity_name": { "type": "string" },
+    "metadata": {
+      "type": "object",
+      "required": ["product", "version"],
+      "properties": {
+        "product": {
+          "type": "object",
+          "required": ["name", "vendor_name"],
+          "properties": {
+            "name": { "type": "string" },
+            "vendor_name": { "type": "string" }
+          }
+        },
+        "version": { "type": "string" }
+      }
+    },
+    "src_endpoint": {
+      "type": "object",
+      "properties": {
+        "ip": { "type": "string" },
+        "port": { "type": "integer" }
+      }
+    },
+    "dst_endpoint": {
+      "type": "object",
+      "properties": {
+        "ip": { "type": "string" },
+        "port": { "type": "integer" }
+      }
+    },
+    "connection_info": {
+      "type": "object",
+      "properties": {
+        "protocol_name": { "type": "string" }
+      }
+    },
+    "disposition": { "type": "string" },
+    "observables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "value"],
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "string" }
+        }
+      }
+    },
+    "unmapped": { "type": "object" },
+    "ulpf": {
+      "type": "object",
+      "required": ["raw_event_id", "raw_event_hash", "parser_version", "mapping_confidence"],
+      "properties": {
+        "raw_event_id": { "type": "string" },
+        "raw_event_hash": { "type": "string" },
+        "parser_version": { "type": "string" },
+        "mapping_confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    }
+  }
+}

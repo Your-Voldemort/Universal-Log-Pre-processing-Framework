@@ -1,0 +1,31 @@
+# ULPF ingestion agent. Uses raw `socket`/`http_server` sources (not the
+# structured `syslog` source) specifically so the exact original byte
+# sequence reaches /ingest untouched — losslessness starts here, not just
+# in the OCSF mapper.
+data_dir = "/var/lib/vector"
+
+[sources.perimeter_syslog_udp]
+type = "socket"
+mode = "udp"
+address = "0.0.0.0:514"
+
+[sources.perimeter_syslog_tcp]
+type = "socket"
+mode = "tcp"
+address = "0.0.0.0:514"
+
+[sources.perimeter_http]
+type = "http_server"
+address = "0.0.0.0:8080"
+
+[sinks.ulpf_ingest]
+type = "http"
+inputs = ["perimeter_syslog_udp", "perimeter_syslog_tcp", "perimeter_http"]
+uri = "http://ulpf-api:8000/ingest"
+method = "post"
+encoding.codec = "text"
+
+# one raw log line per POST — /ingest expects exactly one event's raw
+# bytes per request body, not a batched/newline-joined blob.
+[sinks.ulpf_ingest.batch]
+max_events = 1
