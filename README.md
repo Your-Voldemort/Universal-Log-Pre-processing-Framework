@@ -160,7 +160,7 @@ Both are host-environment issues, not application bugs — standard/Desktop Dock
 | Method | Path | Purpose |
 |---|---|---|
 | `POST` | `/ingest` | Raw log bytes in → parsed, mapped, stored, or quarantined |
-| `GET` | `/search?q=&source=&limit=` | Substring search over normalized events |
+| `GET` | `/search?q=&source=&time_range=&limit=` | Substring search over normalized events; `time_range` is an ISO 8601 interval on event time, e.g. `2026-08-30T14:00Z/2026-08-30T15:00Z` (either side may be empty, no zone = UTC) |
 | `GET` | `/events/{raw_event_id}` | Raw log + normalized OCSF event, cross-referenced |
 | `GET` | `/verify-chain` | Replays the full hash chain and re-hashes every raw event from disk — `true` unless tampered |
 | `GET` | `/metrics` | Dashboard tile data |
@@ -220,6 +220,8 @@ python3 benchmark/load_test.py testdata/sample_logs.txt http://localhost:8000/in
 ```
 
 An honest replay script, not a formal load-testing framework — it reports the real number, not a target.
+
+Last measured (2026-09-15): **196 events/sec** — 2,000 events in 10.19s, ~17M events/day on that machine; `/verify-chain` over those 2,000 events took 0.01s. Setup: the `ulpf-api` image + Postgres 16 via Docker Compose (rootless Docker 29.5.2, one uvicorn worker) on a 12th Gen Intel Core i5-12450HX laptop (12 threads, ~13 of 15 GB RAM already in use). The script is a sequential client — one request and one TCP connection per event — so this is one-at-a-time throughput (~5 ms per event through ingest, hash chain and both stores), not peak parallel throughput.
 
 ## Known simplifications
 

@@ -94,16 +94,22 @@ class RawStore:
 
     def verify_chain(self) -> bool:
         """Replays the hash chain, then re-hashes every event's bytes from disk, so
-        an edited, truncated or deleted raw log file fails, not only an edited DB row."""
+        an edited, truncated or deleted raw log file fails, not only an edited DB row.
+        The chain must also end at the stored head, so deleting the newest events fails too."""
         with get_conn() as conn:
+            # one statement is one snapshot: an ingest committing mid-check can't make
+            # the stored head and the rows disagree
             rows = conn.execute(
-                "SELECT event_hash, prev_chain_hash, chain_hash, file_path, file_offset, byte_length "
-                "FROM raw_events"
+                "SELECT s.last_hash, r.event_hash, r.prev_chain_hash, r.chain_hash, "
+                "r.file_path, r.file_offset, r.byte_length "
+                "FROM chain_state s LEFT JOIN raw_events r ON true WHERE s.id = 1"
             ).fetchall()
-        records = [{"event_hash": r[0], "prev_chain_hash": r[1], "chain_hash": r[2]} for r in rows]
-        ordered = HashChain.order_by_links(records)  # by links, never by timestamps
+        head = rows[0][0] if rows else GENESIS
+        events = [r[1:] for r in rows if r[1] is not None]
+        records = [{"event_hash": e[0], "prev_chain_hash": e[1], "chain_hash": e[2]} for e in events]
+        ordered = HashChain.order_by_links(records, head=head)  # by links, never by timestamps
         verified = ordered is not None and HashChain.verify(ordered) and raw_bytes_intact(
-            [(r[0], r[3], r[4], r[5]) for r in rows], RAW_DATA_DIR
+            [(e[0], e[3], e[4], e[5]) for e in events], RAW_DATA_DIR
         )
         self._last_verified = (time.monotonic(), verified)
         return verified

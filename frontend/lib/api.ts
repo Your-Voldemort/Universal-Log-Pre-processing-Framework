@@ -2,6 +2,7 @@ export interface OCSFEvent {
   class_uid: number;
   category_uid: number;
   activity_name: string;
+  time?: number; // epoch ms, from the log's own timestamp
   disposition: string;
   metadata: { product: { name: string; vendor_name: string }; version: string };
   src_endpoint?: { ip?: string; port?: number };
@@ -21,6 +22,7 @@ export interface Metrics {
   events_per_sec: number;
   normalized_by_source: Record<string, number>;
   total_normalized: number;
+  drift_by_source: Record<string, number>;
   drift_count: number;
   unmapped_field_ratio: number;
   raw_preservation_pct: number;
@@ -59,9 +61,14 @@ export const api = {
 
   verifyChain: () => fetch("/verify-chain").then((r) => json<{ verified: boolean }>(r)),
 
-  search: (q: string, source?: string) =>
-    fetch(`/search?${new URLSearchParams({ ...(q ? { q } : {}), ...(source ? { source } : {}) })}`)
-      .then((r) => json<{ results: OCSFEvent[] }>(r)),
+  search: (q: string, source?: string, timeRange?: string) =>
+    fetch(
+      `/search?${new URLSearchParams({
+        ...(q ? { q } : {}),
+        ...(source ? { source } : {}),
+        ...(timeRange ? { time_range: timeRange } : {}),
+      })}`,
+    ).then((r) => json<{ results: OCSFEvent[] }>(r)),
 
   getEvent: (rawEventId: string) =>
     fetch(`/events/${rawEventId}`).then(

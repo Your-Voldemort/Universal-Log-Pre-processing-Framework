@@ -50,9 +50,10 @@ class QuarantineStore:
         with get_conn() as conn:
             conn.execute("UPDATE quarantine_events SET status = %s WHERE id = %s", (action, item_id))
 
-    def count(self, status: str = "quarantine") -> int:
+    def counts_by_source(self, status: str = "quarantine") -> dict[str, int]:
         with get_conn() as conn:
-            row = conn.execute(
-                "SELECT count(*) FROM quarantine_events WHERE status = %s", (status,)
-            ).fetchone()
-        return row[0]
+            rows = conn.execute(
+                "SELECT source_format, count(*) FROM quarantine_events WHERE status = %s GROUP BY source_format",
+                (status,),
+            ).fetchall()
+        return {r[0]: r[1] for r in rows}

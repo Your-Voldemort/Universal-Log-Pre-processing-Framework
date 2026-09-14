@@ -39,6 +39,11 @@ export default function DashboardMetrics() {
 
   if (!metrics) return <div className="text-fg2 font-mono text-sm">Loading metrics…</div>;
 
+  // a source with only quarantined events still gets a (drifted) row
+  const sources = Array.from(
+    new Set([...Object.keys(metrics.normalized_by_source), ...Object.keys(metrics.drift_by_source)]),
+  ).sort();
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-px border border-line bg-line md:grid-cols-4">
@@ -68,20 +73,25 @@ export default function DashboardMetrics() {
       <div className="border border-line bg-panel p-4">
         <div className="text-fg3 mb-2 text-[10px] uppercase tracking-wider2">Per-source health</div>
         <div className="space-y-1.5">
-          {Object.entries(metrics.normalized_by_source).map(([source, count]) => (
-            <div key={source} className="flex items-center justify-between text-[13px]">
-              <span className="flex items-center gap-2 font-mono text-fg">
-                <span
-                  className={`lamp h-1.5 w-1.5 ${metrics.drift_count > 0 ? "bg-warn" : "bg-ok"}`}
-                />
-                {source}
-              </span>
-              <span className="text-fg2 font-mono tabular-nums">{count} events</span>
-            </div>
-          ))}
-          {Object.keys(metrics.normalized_by_source).length === 0 && (
-            <div className="text-fg3 text-sm">No events ingested yet.</div>
-          )}
+          {sources.map((source) => {
+            const quarantined = metrics.drift_by_source[source] ?? 0;
+            return (
+              <div key={source} className="flex items-center justify-between text-[13px]">
+                <span className="flex items-center gap-2 font-mono text-fg">
+                  <span className={`lamp h-1.5 w-1.5 ${quarantined > 0 ? "bg-warn" : "bg-ok"}`} />
+                  {source}
+                  <span className={`text-[11px] ${quarantined > 0 ? "text-warn" : "text-fg3"}`}>
+                    {quarantined > 0 ? "drifted" : "healthy"}
+                  </span>
+                </span>
+                <span className="text-fg2 font-mono tabular-nums">
+                  {metrics.normalized_by_source[source] ?? 0} events
+                  {quarantined > 0 && ` · ${quarantined} quarantined`}
+                </span>
+              </div>
+            );
+          })}
+          {sources.length === 0 && <div className="text-fg3 text-sm">No events ingested yet.</div>}
         </div>
       </div>
 

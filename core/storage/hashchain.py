@@ -34,10 +34,11 @@ class HashChain:
         return True
 
     @staticmethod
-    def order_by_links(records: list[dict], genesis: str = GENESIS) -> list[dict] | None:
+    def order_by_links(records: list[dict], genesis: str = GENESIS, head: str | None = None) -> list[dict] | None:
         """Order records by following prev_chain_hash links from genesis, so
         verification never trusts storage order or timestamps. None if they
-        don't form one unbroken chain: a gap, a fork, or unreachable records."""
+        don't form one unbroken chain (a gap, a fork, unreachable records) or,
+        given the stored head, the chain stops short of it (newest records deleted)."""
         by_prev = {r["prev_chain_hash"]: r for r in records}
         if len(by_prev) != len(records):
             return None  # two records claim the same predecessor
@@ -45,7 +46,7 @@ class HashChain:
         while prev in by_prev:
             ordered.append(by_prev.pop(prev))
             prev = ordered[-1]["chain_hash"]
-        return None if by_prev else ordered
+        return None if by_prev or (head is not None and prev != head) else ordered
 
 
 def demo():
@@ -61,6 +62,9 @@ def demo():
     assert HashChain.verify(HashChain.order_by_links(list(reversed(records)))) is True
     assert HashChain.order_by_links(records[:3] + records[4:]) is None, "a deleted middle record breaks the links"
     assert HashChain.order_by_links(records + [dict(records[5], chain_hash="f" * 64)]) is None, "a fork is rejected"
+    head = records[-1]["chain_hash"]
+    assert HashChain.order_by_links(records, head=head) == records
+    assert HashChain.order_by_links(records[:-2], head=head) is None, "deleting the newest records is caught via the head"
 
     print("hashchain demo: OK (clean=True, tampered=False)")
 

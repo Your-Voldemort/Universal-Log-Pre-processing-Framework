@@ -20,12 +20,22 @@ class NormalizedStore:
             ).fetchone()
         return row[0] if row else None
 
-    def search(self, q: str | None = None, source: str | None = None, limit: int = 50) -> list[dict]:
+    def search(
+        self, q: str | None = None, source: str | None = None,
+        start_ms: int | None = None, end_ms: int | None = None, limit: int = 50,
+    ) -> list[dict]:
         clauses = []
         params: list = []
         if source:
             clauses.append("source_format = %s")
             params.append(source)
+        # bounds on OCSF time (epoch ms); an event without a time never matches a time filter
+        if start_ms is not None:
+            clauses.append("(ocsf_json->>'time')::bigint >= %s")
+            params.append(start_ms)
+        if end_ms is not None:
+            clauses.append("(ocsf_json->>'time')::bigint <= %s")
+            params.append(end_ms)
         if q:
             # ponytail: ILIKE on a text cast, not the GIN index — fine at
             # hackathon data volumes; swap to tsvector/@> if it gets slow.
