@@ -5,6 +5,7 @@ _bmad*/
 .opencode/
 .zencoder/
 Claude outputs/*
+.impeccable/*
 
 # Python
 __pycache__/

@@ -1,38 +1,49 @@
 /** @type {import('tailwindcss').Config} */
+
+// Every color is a theme token defined in app/globals.css as OKLCH channels, so
+// light and dark share one vocabulary and opacity modifiers (bg-warn/10) still work.
+const TOKENS = [
+  "canvas", "surface", "raised", "sunken", "scrim",
+  "line", "line-strong", "control",
+  "ink", "ink-2", "ink-3",
+  "accent", "accent-hover", "accent-ink", "accent-soft", "on-accent",
+  "ok", "ok-soft", "warn", "warn-soft", "bad", "bad-soft",
+];
+
 module.exports = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
-    extend: {
-      colors: {
-        ink: "#0A1210", // page ground — gunmetal, not slate
-        panel: "#10231C", // chrome surface (cards, rail, header)
-        panel2: "#152C21", // raised/hover chrome
-        readout: "#071410", // recessed surface for raw evidentiary data
-        line: "#24413A", // hairline seams
-        line2: "#1A312B", // fainter seam, nested dividers
-        brass: "#C99A3B", // signature accent — seal, primary actions, approved
-        brassDim: "#8A6B2A",
-        paper: "#E9E1CB", // seal face / certificate chrome
-        ok: "#5FA98A", // nominal / allowed / verified lamp
-        warn: "#CE7C3E", // drift / pending / caution lamp
-        crit: "#C1483D", // denied / tampered / critical lamp
-        fg: "#EAE6D9", // primary text
-        fg2: "#8FA69C", // secondary / meta text
-        fg3: "#4E655F", // tertiary / placeholder
-      },
-      fontFamily: {
-        sans: ["var(--font-plex-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
-        mono: ["var(--font-plex-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
-      },
-      borderRadius: {
-        DEFAULT: "3px",
-        sm: "2px",
-        md: "3px",
-        lg: "4px",
-      },
-      letterSpacing: {
-        wider2: "0.09em",
-      },
+    colors: {
+      transparent: "transparent",
+      current: "currentColor",
+      ...Object.fromEntries(TOKENS.map((name) => [name, `oklch(var(--${name}) / <alpha-value>)`])),
+    },
+    fontFamily: {
+      sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+      mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+    },
+    // fixed product scale, ~1.15 ratio: 11 / 12 / 13 / 14 / 16 / 20 / 24 px
+    fontSize: {
+      "2xs": ["0.6875rem", { lineHeight: "1rem" }],
+      xs: ["0.75rem", { lineHeight: "1.125rem" }],
+      sm: ["0.8125rem", { lineHeight: "1.25rem" }],
+      base: ["0.875rem", { lineHeight: "1.375rem" }],
+      lg: ["1rem", { lineHeight: "1.5rem" }],
+      xl: ["1.25rem", { lineHeight: "1.75rem" }],
+      "2xl": ["1.5rem", { lineHeight: "2rem" }],
+    },
+    borderRadius: {
+      none: "0",
+      sm: "3px",
+      DEFAULT: "4px",
+      md: "6px",
+      full: "9999px",
+    },
+    zIndex: {
+      0: "0",
+      sticky: "20",
+      scrim: "30",
+      drawer: "40",
     },
   },
   plugins: [],

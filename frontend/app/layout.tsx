@@ -1,30 +1,29 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { JetBrains_Mono, Noto_Sans } from "next/font/google";
+import Shell from "@/components/Shell";
 import "./globals.css";
 
-const plexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-plex-sans",
-  display: "swap",
-});
-
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-plex-mono",
-  display: "swap",
-});
+// next/font downloads these at build time and self-hosts them: no runtime font fetch.
+const sans = Noto_Sans({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "ULPF — Universal Log Pre-processing Framework",
-  description: "SIH26156 · NTRO / NCIIPC · lossless perimeter-log normalization to OCSF",
+  title: { default: "Overview · ULPF", template: "%s · ULPF" },
+  description: "Lossless, air-gapped normalization of perimeter security logs into OCSF.",
 };
+
+// Runs before first paint, so a saved light/dark choice never flashes the system theme.
+const THEME_SCRIPT = `try{var t=localStorage.getItem("ulpf-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${plexSans.variable} ${plexMono.variable}`}>
-      <body className="font-sans">{children}</body>
+    <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
+      <body>
+        <Shell>{children}</Shell>
+      </body>
     </html>
   );
 }
