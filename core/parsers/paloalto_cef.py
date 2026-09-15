@@ -24,6 +24,7 @@ INT_FIELDS = {"src_port", "dst_port"}
 
 class PaloAltoCEFParser(BaseParser):
     source_format = "paloalto_cef"
+    field_keys = frozenset((*KNOWN_KV_FIELDS.values(), "event_time"))
 
     def detect(self, raw_bytes: bytes) -> float:
         text = raw_bytes.decode(errors="ignore")

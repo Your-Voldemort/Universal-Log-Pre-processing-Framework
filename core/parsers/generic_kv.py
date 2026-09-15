@@ -24,6 +24,7 @@ class DynamicKVParser(BaseParser):
     def __init__(self, source_format: str, known_keys: set[str]):
         self.source_format = source_format
         self._known_keys = known_keys
+        self.field_keys = frozenset(known_keys)
 
     def detect(self, raw_bytes: bytes) -> float:
         if not self._known_keys:

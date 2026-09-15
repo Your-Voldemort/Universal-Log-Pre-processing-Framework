@@ -20,30 +20,46 @@ ACTION_DISPOSITION_MAP = {
     "blocked": "Denied", "drop": "Denied",
 }
 
-_SCHEMA_CACHE: dict | None = None
+_SCHEMAS: dict[int, dict] = {}
 
 
 def _set_path(obj: dict, dotted_path: str, value) -> None:
+    """Dotted OCSF path; a numeric segment indexes a list (evidences.0.src_endpoint.ip)."""
     parts = dotted_path.split(".")
     cur = obj
-    for p in parts[:-1]:
-        cur = cur.setdefault(p, {})
-    cur[parts[-1]] = value
+    for part, child in zip(parts, parts[1:]):
+        if isinstance(cur, list):
+            index = int(part)
+            while len(cur) <= index:
+                cur.append([] if child.isdigit() else {})
+            cur = cur[index]
+        else:
+            cur = cur.setdefault(part, [] if child.isdigit() else {})
+    if isinstance(cur, list):
+        index = int(parts[-1])
+        while len(cur) <= index:
+            cur.append(None)
+        cur[index] = value
+    else:
+        cur[parts[-1]] = value
 
 
 def _get_path(obj: dict, dotted_path: str):
     cur = obj
     for p in dotted_path.split("."):
-        if not isinstance(cur, dict) or p not in cur:
+        if isinstance(cur, list) and p.isdigit() and int(p) < len(cur):
+            cur = cur[int(p)]
+        elif isinstance(cur, dict) and p in cur:
+            cur = cur[p]
+        else:
             return None
-        cur = cur[p]
     return cur
 
 
 def _expected_json_type(schema: dict, dotted_path: str) -> str | None:
     node = schema
     for part in dotted_path.split("."):
-        node = (node or {}).get("properties", {}).get(part)
+        node = (node or {}).get("items") if part.isdigit() else (node or {}).get("properties", {}).get(part)
         if node is None:
             return None
     return node.get("type")
@@ -63,12 +79,15 @@ def _coerce_to_schema_type(value, expected_type: str | None):
     return value
 
 
-def _load_schema() -> dict:
-    global _SCHEMA_CACHE
-    if _SCHEMA_CACHE is None:
-        with open(SCHEMA_DIR / "network_activity_4001.schema.json") as f:
-            _SCHEMA_CACHE = json.load(f)
-    return _SCHEMA_CACHE
+def _load_schema(class_uid: int) -> dict:
+    """One vendored schema per OCSF class: core/ocsf/schema/*_<class_uid>.schema.json.
+    A new class is a new schema file, not a code change."""
+    if class_uid not in _SCHEMAS:
+        path = next(SCHEMA_DIR.glob(f"*_{class_uid}.schema.json"), None)
+        if path is None:
+            raise ValueError(f"no vendored OCSF schema for class_uid {class_uid} in {SCHEMA_DIR}")
+        _SCHEMAS[class_uid] = json.loads(path.read_text())
+    return _SCHEMAS[class_uid]
 
 
 class OCSFMapper:
@@ -91,6 +110,7 @@ class OCSFMapper:
 
     def map(self, event: ParsedEvent, mapping_confidence: float, raw_event_id: str) -> dict:
         mapping = self.mappings[event.source_format]
+        schema = _load_schema(mapping["ocsf_class_uid"])
 
         out: dict = {
             "class_uid": mapping["ocsf_class_uid"],
@@ -108,15 +128,20 @@ class OCSFMapper:
         # field_maps, which double as the AI-assist example the local model imitates.
         if "event_time" in remaining_fields:
             out["time"] = remaining_fields.pop("event_time")
+        value_maps = mapping.get("value_maps", {})
         for src_key, target_path in mapping.get("field_map", {}).items():
             if src_key not in remaining_fields:
                 continue
             value = remaining_fields.pop(src_key)
+            if src_key in value_maps:
+                # vendor code -> OCSF value, declared in YAML (Suricata severity 2 -> severity_id 3)
+                codes = value_maps[src_key]
+                value = codes.get(value, codes.get("default", value))
             if target_path == "disposition":
                 value = ACTION_DISPOSITION_MAP.get(str(value).lower(), str(value).title())
             else:
-                value = _coerce_to_schema_type(value, _expected_json_type(_load_schema(), target_path))
-            if target_path == "connection_info.protocol_name":
+                value = _coerce_to_schema_type(value, _expected_json_type(schema, target_path))
+            if target_path.endswith("connection_info.protocol_name"):
                 value = value.lower()  # OCSF protocol names are lowercase ("tcp"), whatever the vendor logs
             _set_path(out, target_path, value)
 
@@ -141,7 +166,7 @@ class OCSFMapper:
             "mapping_confidence": mapping_confidence,
         }
 
-        jsonschema.validate(out, _load_schema())
+        jsonschema.validate(out, schema)
         return out
 
 
@@ -199,6 +224,42 @@ def demo():
     numeric_ocsf_event = mapper.map(numeric_proto_event, mapping_confidence=0.8, raw_event_id="evt_numeric")
     assert numeric_ocsf_event["connection_info"]["protocol_name"] == "6"  # coerced int -> str
     print("ocsf mapper numeric-target-type demo: OK")
+
+    # Juniper SRX: protocol number and session action translate through the YAML value_maps
+    from parsers.juniper_srx import JuniperSRXParser
+
+    srx_deny = (
+        b'<14>1 2026-08-30T19:45:12+05:30 SRX-EDGE-01 RT_FLOW - RT_FLOW_SESSION_DENY [junos@2636.1.1.1.2.40 '
+        b'source-address="203.0.113.44" source-port="40110" destination-address="10.1.1.10" '
+        b'destination-port="22" protocol-id="6" policy-name="UNTRUST-DENY" reason="policy deny"]'
+    )
+    srx = mapper.map(JuniperSRXParser().parse(srx_deny), mapping_confidence=0.95, raw_event_id="evt_srx")
+    assert srx["disposition"] == "Denied" and srx["connection_info"]["protocol_name"] == "tcp"
+    assert srx["time"] == 1788099312000 and srx["unmapped"]["policy-name"] == "UNTRUST-DENY"
+
+    # Suricata alert -> Detection Finding (class 2004): endpoints go under evidences[0]
+    from parsers.suricata_eve import SuricataEVEParser
+
+    alert = (
+        b'{"timestamp":"2026-08-30T19:45:02.123456+0530","event_type":"alert","src_ip":"203.0.113.44",'
+        b'"src_port":40101,"dest_ip":"172.20.1.8","dest_port":23,"proto":"TCP","alert":{"action":"allowed",'
+        b'"signature_id":2001219,"signature":"ET SCAN Potential SSH Scan",'
+        b'"category":"Attempted Information Leak","severity":2}}'
+    )
+    finding = mapper.map(SuricataEVEParser().parse(alert), mapping_confidence=0.95, raw_event_id="evt_ids")
+    assert (finding["class_uid"], finding["category_uid"], finding["type_uid"]) == (2004, 2, 200401)
+    assert finding["finding_info"] == {
+        "uid": "2001219", "title": "ET SCAN Potential SSH Scan", "types": ["Attempted Information Leak"]}
+    assert finding["severity_id"] == 3 and finding["disposition"] == "Detected" and finding["time"] == 1788099302123
+    assert finding["evidences"] == [{
+        "src_endpoint": {"ip": "203.0.113.44", "port": 40101},
+        "dst_endpoint": {"ip": "172.20.1.8", "port": 23},
+        "connection_info": {"protocol_name": "tcp"},
+    }], finding["evidences"]
+    assert {"name": "evidences.0.src_endpoint.ip", "value": "203.0.113.44"} in finding["observables"]
+    odd_severity = SuricataEVEParser().parse(alert.replace(b'"severity":2', b'"severity":9'))
+    assert mapper.map(odd_severity, mapping_confidence=0.95, raw_event_id="evt_ids2")["severity_id"] == 99
+    print("ocsf mapper juniper + detection-finding demo: OK")
 
 
 if __name__ == "__main__":

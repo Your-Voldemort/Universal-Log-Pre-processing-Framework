@@ -7,10 +7,17 @@ class SchemaDriftFirewall:
         self._signatures: dict[str, dict[str, type]] = {}
         self._quarantine = quarantine_store
 
-    def check(self, source_format: str, fields: dict, raw_event_id: str | None = None) -> dict | None:
+    def check(
+        self, source_format: str, fields: dict, raw_event_id: str | None = None,
+        declared_keys: frozenset[str] = frozenset(),
+    ) -> dict | None:
         known = self._signatures.setdefault(
             source_format, {k: type(v) for k, v in fields.items()}
         )
+        # a key the parser declares but the first event lacked (ports after an ICMP event)
+        # is optional, not drift: learn its type the first time it shows up
+        for k in set(fields).intersection(declared_keys).difference(known):
+            known[k] = type(fields[k])
         type_drift = {
             k: {"expected": known[k].__name__, "received": type(v).__name__}
             for k, v in fields.items()
@@ -53,6 +60,17 @@ def demo():
     assert alert is not None
     assert alert["new_fields"] == ["vendor_new_field"]
     assert len(fake.held) == 2
+
+    # declared optional keys: a source whose first event lacks ports (ICMP) must not
+    # have every later port-bearing event quarantined as "new fields"
+    fw = SchemaDriftFirewall(fake)
+    declared = frozenset({"src_ip", "dst_port"})
+    held_before = len(fake.held)
+    assert fw.check("suricata_eve", {"src_ip": "203.0.113.44"}, declared_keys=declared) is None
+    assert fw.check("suricata_eve", {"src_ip": "203.0.113.44", "dst_port": 22}, declared_keys=declared) is None
+    assert fw.check("suricata_eve", {"src_ip": "203.0.113.44", "dst_port": "22"}, declared_keys=declared) is not None
+    alert = fw.check("suricata_eve", {"src_ip": "203.0.113.44", "vendor_new_field": 1}, declared_keys=declared)
+    assert alert["new_fields"] == ["vendor_new_field"] and len(fake.held) == held_before + 2
 
     print("drift firewall demo: OK")
 

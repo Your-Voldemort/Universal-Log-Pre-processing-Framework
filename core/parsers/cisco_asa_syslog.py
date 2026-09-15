@@ -68,6 +68,7 @@ def match_flow(message: str) -> dict | None:
 
 class CiscoASASyslogParser(BaseParser):
     source_format = "cisco_asa_syslog"
+    field_keys = frozenset((*FLOW_KEYS, "event_time"))
 
     def detect(self, raw_bytes: bytes) -> float:
         asa = ASA_MESSAGE.search(raw_bytes.decode(errors="ignore"))

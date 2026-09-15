@@ -58,8 +58,13 @@ def _utc(epoch_ms: int | None) -> str:
     return datetime.fromtimestamp(epoch_ms / 1000, timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
 
+def _ep(event: dict, side: str) -> dict:
+    """Network Activity carries endpoints top-level; a Detection Finding (IDS alert) in evidences."""
+    return event.get(side) or (event.get("evidences") or [{}])[0].get(side) or {}
+
+
 def _endpoint(event: dict, side: str) -> str:
-    ep = event.get(side) or {}
+    ep = _ep(event, side)
     return f"{ep.get('ip', 'n/a')}:{ep['port']}" if "port" in ep else ep.get("ip", "n/a")
 
 
@@ -80,11 +85,11 @@ def generate_report(flagged_events: list[dict], point_of_contact: str = "SOC Dut
     dispositions = Counter(e.get("disposition", "Unknown") for e in events)
     ports_by_src: dict[str, set] = defaultdict(set)
     for e in events:
-        port = (e.get("dst_endpoint") or {}).get("port")
-        ports_by_src[(e.get("src_endpoint") or {}).get("ip", "unknown")].update([port] if port is not None else [])
+        port = _ep(e, "dst_endpoint").get("port")
+        ports_by_src[_ep(e, "src_endpoint").get("ip", "unknown")].update([port] if port is not None else [])
     all_ports = sorted(set().union(*ports_by_src.values()))
     nature = (
-        f"{len(events)} network activity event(s) ("
+        f"{len(events)} event(s) ("
         + ", ".join(f"{n} {d}" for d, n in sorted(dispositions.items()))
         + f") from {', '.join(sorted(ports_by_src))} to port(s) {', '.join(map(str, all_ports)) or 'n/a'}"
     )
@@ -103,7 +108,7 @@ def generate_report(flagged_events: list[dict], point_of_contact: str = "SOC Dut
     return REPORT_TEMPLATE.render(
         safe_framing=SAFE_FRAMING,
         incident_timestamp=incident_timestamp,
-        systems_affected=", ".join(sorted({(e.get("dst_endpoint") or {}).get("ip", "unknown") for e in events})),
+        systems_affected=", ".join(sorted({_ep(e, "dst_endpoint").get("ip", "unknown") for e in events})),
         nature_of_incident=nature,
         remedial_action_taken="; ".join(remedial) or "none recorded",
         point_of_contact=point_of_contact,
@@ -144,6 +149,16 @@ def demo():
     mixed = generate_report([scan_event(0, 443, "Allowed"), {"disposition": "Denied", "ulpf": {"raw_event_id": "evt_bare"}}])
     assert "1 event(s) not blocked by the device, pending SOC review" in mixed
     assert "port scanning" not in mixed and "evt_bare" in mixed and "time unknown" in mixed
+
+    ids_alert = {
+        "class_uid": 2004, "disposition": "Detected", "time": 1788099302123,
+        "evidences": [{"src_endpoint": {"ip": "203.0.113.44", "port": 40100},
+                       "dst_endpoint": {"ip": "172.20.1.8", "port": 22}}],
+        "metadata": {"product": {"name": "Suricata"}}, "ulpf": {"raw_event_id": "evt_ids"},
+    }
+    ids_report = generate_report([ids_alert])
+    assert "| Systems Affected | 172.20.1.8 |" in ids_report and "203.0.113.44:40100 -> 172.20.1.8:22" in ids_report
+    assert "1 Detected" in ids_report and "pending SOC review" in ids_report
     print("compliance report_generator demo: OK")
     print(report)
 

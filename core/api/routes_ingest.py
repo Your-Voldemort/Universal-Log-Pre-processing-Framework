@@ -13,9 +13,9 @@ UNRECOGNIZED = "_unrecognized"
 _replay_lock = threading.Lock()
 
 
-def normalize(event, confidence: float, event_id: str) -> dict:
+def normalize(parser, event, confidence: float, event_id: str) -> dict:
     """Drift check, then OCSF map + store — shared by live ingest and replay."""
-    drift_alert = state.drift_firewall.check(event.source_format, event.fields, event_id)
+    drift_alert = state.drift_firewall.check(event.source_format, event.fields, event_id, parser.field_keys)
     if drift_alert:
         return {"status": "quarantined", "event_id": event_id, "alert": drift_alert}
     ocsf_event = state.mapper.map(event, confidence, event_id)
@@ -39,7 +39,7 @@ async def ingest(request: Request):
 
     event = parser.parse(raw_bytes)
     chain_record = state.raw_store.append(event.source_format, raw_bytes)
-    return normalize(event, confidence, chain_record["event_id"])
+    return normalize(parser, event, confidence, chain_record["event_id"])
 
 
 def replay_unrecognized() -> dict[str, int]:
@@ -55,7 +55,7 @@ def replay_unrecognized() -> dict[str, int]:
                 counts["still_unrecognized"] += 1
                 continue
             try:
-                result = normalize(parser.parse(raw_bytes), confidence, event_id)
+                result = normalize(parser, parser.parse(raw_bytes), confidence, event_id)
             except jsonschema.ValidationError:
                 counts["failed_validation"] += 1  # stays unprocessed, raw kept; retried next replay
                 continue

@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OCSF Detection Finding (class_uid 2004) — ULPF vendored subset",
+  "description": "Minimal structural schema for the OCSF fields ULPF populates for IDS/IPS alerts. Vendored locally so validation never requires a runtime fetch of the full ocsf/ocsf-schema project.",
+  "type": "object",
+  "required": [
+    "class_uid", "category_uid", "type_uid", "activity_id", "activity_name",
+    "metadata", "time", "finding_info", "severity_id", "observables", "unmapped", "ulpf"
+  ],
+  "properties": {
+    "class_uid": { "const": 2004 },
+    "category_uid": { "const": 2 },
+    "type_uid": { "type": "integer" },
+    "activity_id": { "type": "integer" },
+    "activity_name": { "type": "string" },
+    "time": { "type": "integer" },
+    "metadata": {
+      "type": "object",
+      "required": ["product", "version"],
+      "properties": {
+        "product": {
+          "type": "object",
+          "required": ["name", "vendor_name"],
+          "properties": {
+            "name": { "type": "string" },
+            "vendor_name": { "type": "string" }
+          }
+        },
+        "version": { "type": "string" }
+      }
+    },
+    "finding_info": {
+      "type": "object",
+      "required": ["uid", "title"],
+      "properties": {
+        "uid": { "type": "string" },
+        "title": { "type": "string" },
+        "types": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "severity_id": { "type": "integer", "enum": [0, 1, 2, 3, 4, 5, 6, 99] },
+    "disposition": { "type": "string" },
+    "evidences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "src_endpoint": {
+            "type": "object",
+            "properties": { "ip": { "type": "string" }, "port": { "type": "integer" } }
+          },
+          "dst_endpoint": {
+            "type": "object",
+            "properties": { "ip": { "type": "string" }, "port": { "type": "integer" } }
+          },
+          "connection_info": {
+            "type": "object",
+            "properties": { "protocol_name": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "observables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "value"],
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "string" }
+        }
+      }
+    },
+    "unmapped": { "type": "object" },
+    "ulpf": {
+      "type": "object",
+      "required": ["raw_event_id", "raw_event_hash", "parser_version", "mapping_confidence"],
+      "properties": {
+        "raw_event_id": { "type": "string" },
+        "raw_event_hash": { "type": "string" },
+        "parser_version": { "type": "string" },
+        "mapping_confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    }
+  }
+}

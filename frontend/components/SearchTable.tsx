@@ -13,6 +13,13 @@ function utc(ms?: number) {
 // datetime-local carries no zone; the inputs are labelled UTC, like every time ULPF shows
 const bound = (value: string) => (value ? `${value}Z` : "");
 
+// Network Activity has endpoints top-level; a Detection Finding (IDS alert) has them in evidences
+function endpoints(e: OCSFEvent) {
+  const src = e.src_endpoint ?? e.evidences?.[0]?.src_endpoint;
+  const dst = e.dst_endpoint ?? e.evidences?.[0]?.dst_endpoint;
+  return `${src?.ip ?? "—"} → ${dst?.ip ?? "—"}${dst?.port ? `:${dst.port}` : ""}`;
+}
+
 export default function SearchTable() {
   const [q, setQ] = useState("");
   const [source, setSource] = useState("");
@@ -112,11 +119,11 @@ export default function SearchTable() {
               >
                 <td className="px-3 py-2 font-mono text-xs text-fg2">{utc(e.time)}</td>
                 <td className="px-3 py-2 font-mono text-xs text-fg2">{e.ulpf.raw_event_id}</td>
-                <td className="px-3 py-2 text-fg">{e.metadata.product.name}</td>
-                <td className="px-3 py-2 font-mono text-fg">
-                  {e.src_endpoint?.ip ?? "—"} → {e.dst_endpoint?.ip ?? "—"}
-                  {e.dst_endpoint?.port ? `:${e.dst_endpoint.port}` : ""}
+                <td className="px-3 py-2 text-fg">
+                  {e.metadata.product.name}
+                  {e.finding_info && <div className="text-xs text-warn">{e.finding_info.title}</div>}
                 </td>
+                <td className="px-3 py-2 font-mono text-fg">{endpoints(e)}</td>
                 <td className="px-3 py-2">
                   <span className={e.disposition === "Allowed" ? "text-ok" : "text-crit"}>
                     {e.disposition}

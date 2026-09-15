@@ -26,11 +26,15 @@ class ParserRegistry:
 
 def build_default_registry() -> ParserRegistry:
     from .cisco_asa_syslog import CiscoASASyslogParser
+    from .juniper_srx import JuniperSRXParser
     from .paloalto_cef import PaloAltoCEFParser
+    from .suricata_eve import SuricataEVEParser
 
     registry = ParserRegistry()
     registry.register(CiscoASASyslogParser())
     registry.register(PaloAltoCEFParser())
+    registry.register(JuniperSRXParser())
+    registry.register(SuricataEVEParser())
     return registry
 
 
@@ -59,10 +63,21 @@ def demo():
     parser, conf = registry.route(paloalto_sample)
     assert parser is not None and parser.source_format == "paloalto_cef" and conf >= 0.7
 
+    for source_format, sample in (
+        ("juniper_srx_rt_flow", b'<14>1 2026-08-30T14:22:31Z SRX-EDGE-01 RT_FLOW - RT_FLOW_SESSION_DENY '
+            b'[junos@2636.1.1.1.2.40 source-address="203.0.113.44" source-port="40110" '
+            b'destination-address="10.1.1.10" destination-port="22" protocol-id="6"]'),
+        ("suricata_eve", b'{"timestamp":"2026-08-30T14:22:31Z","event_type":"alert","src_ip":"203.0.113.44",'
+            b'"dest_ip":"172.20.1.8","proto":"ICMP","alert":{"action":"allowed","signature_id":2100384,'
+            b'"signature":"GPL ICMP_INFO PING","category":"Misc activity","severity":3}}'),
+    ):
+        parser, conf = registry.route(sample)
+        assert parser is not None and parser.source_format == source_format and conf >= 0.7, source_format
+
     parser, conf = registry.route(unknown_sample)
     assert parser is None, "unknown format must not match a known parser"
 
-    print("registry demo: OK (both known formats routed, unknown format falls through)")
+    print("registry demo: OK (all 4 built-in formats routed, unknown format falls through)")
 
 
 if __name__ == "__main__":

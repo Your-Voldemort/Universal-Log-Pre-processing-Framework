@@ -8,6 +8,13 @@ export interface OCSFEvent {
   src_endpoint?: { ip?: string; port?: number };
   dst_endpoint?: { ip?: string; port?: number };
   connection_info?: { protocol_name?: string };
+  // Detection Finding (class 2004, e.g. Suricata alerts): endpoints live in evidences
+  finding_info?: { uid: string; title: string; types?: string[] };
+  severity_id?: number;
+  evidences?: {
+    src_endpoint?: { ip?: string; port?: number };
+    dst_endpoint?: { ip?: string; port?: number };
+  }[];
   observables: { name: string; value: string }[];
   unmapped: Record<string, unknown>;
   ulpf: {

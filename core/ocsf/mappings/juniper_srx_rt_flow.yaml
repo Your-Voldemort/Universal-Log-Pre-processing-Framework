@@ -1,0 +1,29 @@
+source_format: juniper_srx_rt_flow
+ocsf_class_uid: 4001          # Network Activity
+ocsf_category_uid: 4
+activity_id: 1
+activity_name: "Connection Attempt"
+field_map:
+  src_ip: src_endpoint.ip
+  dst_ip: dst_endpoint.ip
+  src_port: src_endpoint.port
+  dst_port: dst_endpoint.port
+  proto: connection_info.protocol_name
+  action: disposition
+value_maps:
+  proto:                       # IANA protocol number from protocol-id
+    1: icmp
+    6: tcp
+    17: udp
+  action:                      # RT_FLOW_SESSION_<CREATE|CLOSE|DENY>
+    create: Allowed
+    close: Allowed             # closes a session the policy had allowed
+    deny: Denied
+static_fields:
+  metadata.product.name: "Junos OS (SRX)"
+  metadata.product.vendor_name: "Juniper Networks"
+  metadata.version: "1.9.0"
+unmapped_bucket: "unmapped"     # NAT, zones, policy, application, byte counts, reason land here
+observable_fields:
+  - src_endpoint.ip
+  - dst_endpoint.ip
