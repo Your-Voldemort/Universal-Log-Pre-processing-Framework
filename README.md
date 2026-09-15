@@ -206,6 +206,25 @@ cd core
 ../.venv/bin/python -m compliance.report_generator
 ```
 
+### End-to-end tests
+
+`core/tests/test_e2e.py` drives the real API against Postgres: every built-in format, drift quarantine and release, AI-assist approval guards and replay, hash-chain tamper detection, time-range search and the compliance report. Ollama isn't needed.
+
+> [!WARNING]
+> The tests TRUNCATE every ULPF table in `ULPF_TEST_DATABASE_URL`. Give them a throwaway database — port 5434 below, so it can't be the 5433 dev database above.
+
+```bash
+docker run -d --rm --name ulpf-test-pg -e POSTGRES_USER=ulpf -e POSTGRES_PASSWORD=ulpf \
+  -e POSTGRES_DB=ulpf -p 5434:5432 postgres:16-alpine
+
+cd core
+ULPF_TEST_DATABASE_URL=postgresql://ulpf:ulpf@localhost:5434/ulpf ../.venv/bin/python tests/test_e2e.py
+
+docker stop ulpf-test-pg   # --rm deletes it
+```
+
+Plain asserts with a built-in runner; `python -m pytest tests/` works too if pytest is installed.
+
 ### Frontend, without Docker
 
 ```bash
