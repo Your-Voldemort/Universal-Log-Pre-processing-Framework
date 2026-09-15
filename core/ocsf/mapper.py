@@ -259,7 +259,18 @@ def demo():
     assert {"name": "evidences.0.src_endpoint.ip", "value": "203.0.113.44"} in finding["observables"]
     odd_severity = SuricataEVEParser().parse(alert.replace(b'"severity":2', b'"severity":9'))
     assert mapper.map(odd_severity, mapping_confidence=0.95, raw_event_id="evt_ids2")["severity_id"] == 99
-    print("ocsf mapper juniper + detection-finding demo: OK")
+
+    # Check Point: Reject translates to Denied via value_maps; time comes from the gateway's time field
+    from parsers.checkpoint import CheckPointParser
+
+    cp_reject = (
+        b'<134>1 2026-08-30T14:06:03Z CP-GW-DC2 CheckPoint 26203 - [action:"Reject"; dst:"198.51.100.66"; '
+        b'proto:"6"; rule_name:"Block direct SMTP"; s_port:"50110"; service:"25"; src:"10.1.2.21"; time:"1788098763"]'
+    )
+    cp = mapper.map(CheckPointParser().parse(cp_reject), mapping_confidence=0.95, raw_event_id="evt_cp")
+    assert cp["disposition"] == "Denied" and cp["dst_endpoint"] == {"ip": "198.51.100.66", "port": 25}
+    assert cp["connection_info"]["protocol_name"] == "tcp" and cp["time"] == 1788098763000
+    print("ocsf mapper juniper + checkpoint + detection-finding demo: OK")
 
 
 if __name__ == "__main__":

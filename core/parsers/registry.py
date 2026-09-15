@@ -25,6 +25,7 @@ class ParserRegistry:
 
 
 def build_default_registry() -> ParserRegistry:
+    from .checkpoint import CheckPointParser
     from .cisco_asa_syslog import CiscoASASyslogParser
     from .juniper_srx import JuniperSRXParser
     from .paloalto_cef import PaloAltoCEFParser
@@ -35,6 +36,7 @@ def build_default_registry() -> ParserRegistry:
     registry.register(PaloAltoCEFParser())
     registry.register(JuniperSRXParser())
     registry.register(SuricataEVEParser())
+    registry.register(CheckPointParser())
     return registry
 
 
@@ -70,6 +72,8 @@ def demo():
         ("suricata_eve", b'{"timestamp":"2026-08-30T14:22:31Z","event_type":"alert","src_ip":"203.0.113.44",'
             b'"dest_ip":"172.20.1.8","proto":"ICMP","alert":{"action":"allowed","signature_id":2100384,'
             b'"signature":"GPL ICMP_INFO PING","category":"Misc activity","severity":3}}'),
+        ("checkpoint_log_exporter", b'<134>1 2026-08-30T14:15:21Z CP-GW-DC2 CheckPoint 26203 - [action:"Drop"; '
+            b'dst:"10.1.2.5"; proto:"6"; s_port:"40112"; service:"445"; src:"203.0.113.44"; time:"1788099321"]'),
     ):
         parser, conf = registry.route(sample)
         assert parser is not None and parser.source_format == source_format and conf >= 0.7, source_format
@@ -77,7 +81,7 @@ def demo():
     parser, conf = registry.route(unknown_sample)
     assert parser is None, "unknown format must not match a known parser"
 
-    print("registry demo: OK (all 4 built-in formats routed, unknown format falls through)")
+    print("registry demo: OK (all 5 built-in formats routed, unknown format falls through)")
 
 
 if __name__ == "__main__":

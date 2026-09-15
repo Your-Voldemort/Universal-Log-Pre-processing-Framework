@@ -1,0 +1,29 @@
+source_format: checkpoint_log_exporter
+ocsf_class_uid: 4001          # Network Activity
+ocsf_category_uid: 4
+activity_id: 1
+activity_name: "Connection Attempt"
+field_map:
+  src_ip: src_endpoint.ip
+  dst_ip: dst_endpoint.ip
+  src_port: src_endpoint.port
+  dst_port: dst_endpoint.port
+  proto: connection_info.protocol_name
+  action: disposition
+value_maps:
+  proto:                       # IANA protocol number
+    1: icmp
+    6: tcp
+    17: udp
+  action:                      # firewall-blade verdicts
+    Accept: Allowed
+    Drop: Denied
+    Reject: Denied
+static_fields:
+  metadata.product.name: "Check Point Firewall"
+  metadata.product.vendor_name: "Check Point Software Technologies"
+  metadata.version: "1.9.0"
+unmapped_bucket: "unmapped"     # rule, zones, interface, NAT (xlate*), loguid, origin gateway land here
+observable_fields:
+  - src_endpoint.ip
+  - dst_endpoint.ip

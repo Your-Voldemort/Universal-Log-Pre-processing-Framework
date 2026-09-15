@@ -88,7 +88,7 @@ The response is a validated OCSF event with `unmapped`, `observables`, and `ulpf
 
 ### Demo data
 
-For a dashboard that isn't empty — 60 events across the four built-in formats (Cisco ASA, Palo Alto, Juniper SRX, Suricata IDS), a realistic denied port-scan burst (good material for the Compliance Report tab), and 3 unrecognized-format lines for the AI-assist demo:
+For a dashboard that isn't empty — 64 events across the five built-in formats (Cisco ASA, Palo Alto, Juniper SRX, Check Point, Suricata IDS), a realistic denied port-scan burst (good material for the Compliance Report tab), and 3 unrecognized-format lines for the AI-assist demo:
 
 ```bash
 python3 testdata/seed_demo_data.py testdata/demo_logs.txt http://localhost:8000/ingest
@@ -198,6 +198,7 @@ cd core
 ../.venv/bin/python -m storage.raw_store
 ../.venv/bin/python -m parsers.registry
 ../.venv/bin/python -m parsers.juniper_srx
+../.venv/bin/python -m parsers.checkpoint
 ../.venv/bin/python -m parsers.suricata_eve
 ../.venv/bin/python -m ocsf.mapper
 ../.venv/bin/python -m drift.firewall
@@ -234,6 +235,7 @@ MVP scope, not oversights — see the Build Brief for what's deliberately deferr
 - OCSF schema is a hand-vendored subset covering Network Activity (`class_uid` 4001) and Detection Finding (`class_uid` 2004), not the full `ocsf/ocsf-schema` repo. A new class is one more `*_<class_uid>.schema.json` file in `core/ocsf/schema/`.
 - The Cisco ASA parser covers connection build/teardown (302013–302016) and deny messages (106001, 106006, 106015, 106023, 106100), IPv4 only. Any other ASA message keeps its raw bytes and routes to `unknown_format` / AI-assist.
 - The Juniper SRX parser reads structured-data syslog (`RT_FLOW_SESSION_CREATE` / `CLOSE` / `DENY`, RFC 5424 with zone offsets). Other layouts, such as BSD-format `RT_FLOW`, keep their raw bytes and route to `unknown_format`.
+- The Check Point parser reads Log Exporter syslog-format firewall connection logs (`action` Accept / Drop / Reject). Threat-prevention logs (Detect, Prevent, …) and CEF/LEEF exports keep their raw bytes and route to `unknown_format`. FortiGate deliberately has no built-in parser: it is the AI-assist demo's unrecognized format.
 - The Suricata parser reads EVE JSON `alert` events, normalized as OCSF Detection Finding (2004) with endpoints under `evidences`. Other event types (flow, dns, http, …) keep their raw bytes and route to `unknown_format`.
 - Device timestamps carry no timezone, so OCSF `time` assumes UTC — keep perimeter devices on UTC via NTP.
 - Search is `ILIKE` over a JSONB text cast, not a tsvector/GIN query — fine at hackathon data volumes.
