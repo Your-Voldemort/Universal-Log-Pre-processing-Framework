@@ -1,0 +1,42 @@
+# Internet-facing overlay: Caddy terminates HTTPS and asks for a login in front of
+# the console. Nothing else is reachable from outside the host.
+#
+#   cp Caddyfile.example Caddyfile   # then set your domain and login
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [frontend]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data   # certificates; keep it, or Let's Encrypt rate limits bite on redeploys
+    networks: [ulpf_net]
+
+  frontend:
+    restart: unless-stopped
+    ports: !reset []   # only reachable through caddy
+
+  ulpf-api:
+    restart: unless-stopped
+    ports: !override
+      - "127.0.0.1:8000:8000"   # no auth on the API itself; host-local for seeding and debugging
+
+  vector:
+    restart: unless-stopped
+    ports: !override
+      - "127.0.0.1:514:514/udp"
+      - "127.0.0.1:514:514/tcp"
+      - "127.0.0.1:8080:8080"
+
+  postgres:
+    restart: unless-stopped
+
+  ollama:
+    restart: unless-stopped
+
+volumes:
+  caddy_data:

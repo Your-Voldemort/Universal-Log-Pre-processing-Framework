@@ -80,3 +80,6 @@ htmlcov/
 
 1789023612732.pdf
 SIH2024_IDEA_Presentation_Format.pptx
+
+# Deployment (copied from Caddyfile.example, holds the login hash)
+Caddyfile

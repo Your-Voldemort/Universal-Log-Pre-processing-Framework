@@ -1,0 +1,14 @@
+# Copy to Caddyfile (gitignored), then replace the domain and the login.
+#
+# Domain: an A record pointing at the server's public IP. Without a domain, use
+# <public-ip-with-dashes>.sslip.io, e.g. 203-0-113-10.sslip.io.
+#
+# Password hash (prompts for the password, so it stays out of shell history):
+#   docker run --rm -it caddy:2 caddy hash-password
+ulpf.example.com {
+	# The API has no authentication of its own, so this login guards everything.
+	basic_auth {
+		admin $2a$14$replace.this.with.the.output.of.caddy.hash-password
+	}
+	reverse_proxy frontend:3000
+}
